@@ -55,7 +55,7 @@ handler.help = [
   'menuadmin_tr'
 ];
 handler.tags = ['menuadmin'];
-handler.command = /^(menuadmin|adminmenu|menúadmin|menúadministrador|menuadministrador|menuowner|menúpropietario|menupainel|adminmenü|管理菜单|菜单管理员|менюадмин|менюадминистратора|قائمةالمدير|قائمةالمسؤول|प्रशासनमेनू|एडमिनमेनू|menuadmin_fr|menuadministrateur|menuadmin_id|menuadmin_tr)$/i;
+handler.command = /^(menuadmin|adminmenu|menúadmin|menúadministrador|menuadministrador|menupainel|adminmenü|管理菜单|菜单管理员|менюадмин|менюадминистратора|قائمةالمدير|قائمةالمسؤول|प्रशासनमेनू|एडमिनमेनू|menuadmin_fr|menuadministrateur|menuadmin_id|menuadmin_tr)$/i;
 
 
 export default handler;
