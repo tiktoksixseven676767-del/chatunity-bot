@@ -35,7 +35,6 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
         user.limit = (user.limit || 0) + 800;
         user.exp = (user.exp || 0) + 100;
         resultMsg = global.t('slotWin', userId, groupId, { uc: 800, xp: 100 });
-        gifFile = '../../media/vincita.gif';
     } else {
         user.limit = (user.limit || 0) - bet;
         user.exp = Math.max(0, (user.exp || 0) - bet);
