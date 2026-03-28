@@ -148,6 +148,6 @@ handler.before = async (m, { conn }) => {
 
 handler.help = ['buono-di-carefour'];
 handler.tags = ['game'];
-handler.command = /^(auto|car|skiplogo|skipcar)$/i;
+handler.command = /^(buono-di-carefour)$/i;
 
 export default handler;
