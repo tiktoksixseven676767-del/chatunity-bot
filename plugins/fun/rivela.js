@@ -1,26 +1,54 @@
-const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
+import TicTacToe from '../lib/tictactoe.js';
+const handler = async (m, {conn, usedPrefix, command, text}) => {
+  conn.game = conn.game ? conn.game : {};
+  if (Object.values(conn.game).find((room) => room.id.startsWith('tictactoe') && [room.game.playerX, room.game.playerO].includes(m.sender))) throw '*[❗] _STAI GIA GIOCANDO CON QUALCUNO_*';
+  if (!text) throw `*[❗] _DEVI DARE UN NOME ALLA SALA_*\n\n*—◉ _ESEMPIO_*\n*◉ ${usedPrefix + command} fabri vince*`;
+  let room = Object.values(conn.game).find((room) => room.state === 'WAITING' && (text ? room.name === text : true));
+  if (room) {
+    await m.reply('*[🕹️] _LA PARTITA STA INIZIANDO, UN GIOCATORE SI è UNITO_*');
+    room.o = m.chat;
+    room.game.playerO = m.sender;
+    room.state = 'PLAYING';
+    const arr = room.game.render().map((v) => {
+      return {
+        X: '❎',
+        O: '⭕',
+        1: '1️⃣',
+        2: '2️⃣',
+        3: '3️⃣',
+        4: '4️⃣',
+        5: '5️⃣',
+        6: '6️⃣',
+        7: '7️⃣',
+        8: '8️⃣',
+        9: '9️⃣',
+      }[v];
+    });
+    const str = `
+🎮 _PARTITA TRIS _🎮
 
-async function viewonceCommand(sock, chatId, message) {
-    // Extract quoted imageMessage or videoMessage from your structure
-    const quoted = message.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-    const quotedImage = quoted?.imageMessage;
-    const quotedVideo = quoted?.videoMessage;
+❎ = @${room.game.playerX.split('@')[0]}
+⭕ = @${room.game.playerO.split('@')[0]}
 
-    if (quotedImage && quotedImage.viewOnce) {
-        // Download and send the image
-        const stream = await downloadContentFromMessage(quotedImage, 'image');
-        let buffer = Buffer.from([]);
-        for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
-        await sock.sendMessage(chatId, { image: buffer, fileName: 'media.jpg', caption: quotedImage.caption || '' }, { quoted: message });
-    } else if (quotedVideo && quotedVideo.viewOnce) {
-        // Download and send the video
-        const stream = await downloadContentFromMessage(quotedVideo, 'video');
-        let buffer = Buffer.from([]);
-        for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
-        await sock.sendMessage(chatId, { video: buffer, fileName: 'media.mp4', caption: quotedVideo.caption || '' }, { quoted: message });
-    } else {
-        await sock.sendMessage(chatId, { text: '❌ Please reply to a view-once image or video.' }, { quoted: message });
-    }
-}
+        ${arr.slice(0, 3).join('')}
+        ${arr.slice(3, 6).join('')}
+        ${arr.slice(6).join('')}
 
-module.exports = viewonceCommand; 
+*_TURNO DI_* @${room.game.currentTurn.split('@')[0]}
+`.trim();
+    if (room.x !== room.o) await conn.sendMessage(room.x, {text: str, mentions: this.parseMention(str)}, {quoted: m});
+    await conn.sendMessage(room.o, {text: str, mentions: conn.parseMention(str)}, {quoted: m});
+  } else {
+    room = {
+      id: 'tictactoe-' + (+new Date),
+      x: m.chat,
+      o: '',
+      game: new TicTacToe(m.sender, 'o'),
+      state: 'WAITING'};
+    if (text) room.name = text;
+    conn.sendButton(m.chat, `*🕹 _GIOCA A TRIS_🎮*\n\n*◉ _ASPETTO IL SECONDO GIOCATORE_*\n*◉_ PER ELIMINARE LA PARTITA PRECEDENTE_ ${usedPrefix}delttt*`, wm, [['UNISCITI E GIOCA', `${usedPrefix + command} ${text}`]], m, {mentions: conn.parseMention(text)});
+    conn.game[room.id] = room;
+  }
+};
+handler.command = /^(tris|ttc|ttt|xo)$/i;
+export default handler;
