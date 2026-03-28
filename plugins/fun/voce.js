@@ -37,7 +37,7 @@ const handler = async (m, {text, conn, args, usedPrefix, command}) => {
 
 handler.help = ['tts <lang> <teks>'];
 handler.tags = ['tools'];
-handler.command = /^ai_voce$/i;
+handler.command = /^voce$/i;
 
 export default handler;
 
