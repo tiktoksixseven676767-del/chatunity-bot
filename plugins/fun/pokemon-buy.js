@@ -10,7 +10,7 @@ let handler = async (m, { conn, args }) => {
   const prices = {
     base: 500,
     imperium: 1500,
-    premium: 5000,
+    premium: 1,
   };
 
   if (!['base', 'imperium', 'premium'].includes(type)) {
