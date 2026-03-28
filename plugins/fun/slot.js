@@ -83,4 +83,4 @@ function xpRange(level, multiplier = 1) {
     let max = Math.pow(level + 1, 2) * 20
     let xp = Math.floor((max - min) * multiplier)
     return { min, xp, max }
-}
+} 
