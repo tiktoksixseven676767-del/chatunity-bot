@@ -76,6 +76,6 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
 
 handler.help = ['play <canzone>'];
 handler.tags = ['music'];
-handler.command = /^(play|musica|spotify)$/i;
+handler.command = /^(playtest|musica|spotify)$/i;
 
 export default handler;
