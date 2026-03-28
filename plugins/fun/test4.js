@@ -1,9 +1,10 @@
 'use strict';
 
+const axios = require('axios');
 
 module.exports = {
-    commands:    ['spotify', 'spoti', 'spdl'],
-    description: 'Search Spotify track info and download audio',
+    commands:    ['apk', 'apkdl', 'getapk'],
+    description: 'Search and download an APK from Aptoide',
     permission:  'public',
     group:       true,
     private:     true,
@@ -11,36 +12,46 @@ module.exports = {
         const query = args.join(' ');
         if (!query) {
             return sock.sendMessage(sender, {
-                text: '🎵 Please provide a song name.\nExample: .spotify Blinding Lights',
+                text: '❌ Please provide an app name.\n\nExample: .apk whatsapp',
                 contextInfo
             }, { quoted: message });
         }
-        await sock.sendMessage(sender, { text: '⏳ Searching Spotify...', contextInfo }, { quoted: message });
+
+        await sock.sendMessage(sender, { text: `🔍 Searching for *${query}*...`, contextInfo }, { quoted: message });
+
         try {
-            const api = `https://api.nexoracle.com/downloaders/spotify?query=${encodeURIComponent(query)}&apikey=free_for_use`;
-            const { data } = await axios.get(api, { timeout: 25000, headers: { 'User-Agent': 'Mozilla/5.0' } });
-            const result = data?.result || data?.data;
-            if (!result) throw new Error('No results found.');
-            const audioUrl = result.audio || result.download || result.url;
-            const coverUrl = result.thumbnail || result.image;
-            const name     = result.name || result.title || query;
-            const artist   = result.artist || result.artists || 'Unknown';
-            const caption  = `🎵 *${name}*\n👤 ${artist}\n_Powered by Silva MD_`;
-            if (audioUrl) {
-                await sock.sendMessage(sender, {
-                    audio:    { url: audioUrl },
-                    mimetype: 'audio/mpeg',
-                    ptt:      false,
+            const { data } = await axios.get(
+                `http://ws75.aptoide.com/api/7/apps/search/query=${encodeURIComponent(query)}/limit=1`,
+                {
+                    timeout: 15000,
+                    headers: { 'User-Agent': 'Mozilla/5.0' }
+                }
+            );
+
+            const list = data?.datalist?.list;
+            if (!list?.length) {
+                return sock.sendMessage(sender, {
+                    text: `❌ No APK found for "*${query}*"`,
                     contextInfo
                 }, { quoted: message });
             }
+
+            const app    = list[0];
+            const sizeMB = (app.size / 1048576).toFixed(2);
+
             await sock.sendMessage(sender, {
-                image:   { url: coverUrl || 'https://files.catbox.moe/5uli5p.jpeg' },
-                caption,
+                document: { url: app.file.path_alt },
+                fileName: `${app.name}.apk`,
+                mimetype: 'application/vnd.android.package-archive',
+                caption:  `📱 *${app.name}* — ${sizeMB} MB`,
                 contextInfo
             }, { quoted: message });
-        } catch (e) {
-            await sock.sendMessage(sender, { text: `❌ Spotify search failed: ${e.message}`, contextInfo }, { quoted: message });
+        } catch (err) {
+            console.error('[APK]', err.message);
+            await sock.sendMessage(sender, {
+                text: `⚠️ APK download failed: ${err.message}`,
+                contextInfo
+            }, { quoted: message });
         }
     }
 };
