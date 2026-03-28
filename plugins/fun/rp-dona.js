@@ -1,81 +1,42 @@
+import MessageType from '@whiskeysockets/baileys'
 
-let tassa = 0.02; // 2% di tassa sulle transazioni
+let tassa = 0.02 // 2% di tassa sulle transazioni
 
 let handler = async (m, { conn, text }) => {
-    const userId = m.sender;
-    const groupId = m.chat;
+    let who
+    if (m.isGroup) who = m.mentionedJid[0] // Se in gruppo, prende l'utente menzionato
+    else who = m.chat // Se in privato, usa l'utente corrente
 
-    let who;
-    if (m.isGroup) who = m.mentionedJid?.[0]; // Se in gruppo, prende l'utente menzionato
-    else who = m.chat; // Se in privato, usa l'utente corrente
+    if (!who) throw '🚩 𝚍𝚎𝚟𝚒 𝚖𝚎𝚗𝚣𝚒𝚘𝚗𝚊𝚛𝚎 𝚒𝚕 destinatario @user*'
 
-    if (!who) throw global.t('transferNoMention', userId, groupId);
-    if (who === m.sender) throw global.t('transferSelf', userId, groupId);
+    let txt = text.replace('@' + who.split`@`[0], '').trim()
+    if (!txt) throw '🚩 𝚒𝚗𝚜𝚎𝚛𝚒𝚜𝚌𝚒 𝚕𝚊 𝚚𝚞𝚊𝚗𝚝𝚒𝚝𝚊 𝚍𝚒 💶 𝚞𝚗𝚒𝚝𝚢𝚌𝚘𝚒𝚗𝚜 𝚍𝚊 𝚝𝚛𝚊𝚜𝚏𝚎𝚛𝚒𝚛𝚎'
+    if (isNaN(txt)) throw '𝚖𝚊 𝚑𝚘 𝚜𝚎𝚒 𝚏𝚛𝚘𝚌𝚒𝚘? 𝚜𝚌𝚛𝚒𝚟𝚒 𝚜𝚘𝚕𝚘 𝚗𝚞𝚖𝚎𝚛𝚒'
 
-    let txt = text.replace('@' + who.split`@`[0], '').trim();
-    if (!txt) throw global.t('transferNoAmount', userId, groupId);
-    if (isNaN(txt)) throw global.t('transferInvalidAmount', userId, groupId);
+    let Unitycoins = parseInt(txt)
+    let costo = Unitycoins
+    let tassaImporto = Math.ceil(Unitycoins * tassa)
+    costo += tassaImporto
 
-    let Unitycoins = parseInt(txt);
-    let costo = Unitycoins;
-    let tassaImporto = Math.ceil(Unitycoins * tassa);
-    costo += tassaImporto;
-
-    if (costo < 1) throw global.t('transferMinAmount', userId, groupId);
-
-    let users = global.db.data.users;
-
-    // Inizializzazione sicura
-    if (!users[m.sender]) users[m.sender] = { limit: 0 };
-    if (!users[who]) users[who] = { limit: 0 };
-    if (!users[m.sender].limit) users[m.sender].limit = 0;
-    if (!users[who].limit) users[who].limit = 0;
-
-    if (costo > users[m.sender].limit) throw global.t('transferInsufficient', userId, groupId);
+    if (costo < 1) throw '🚩 𝚒𝚕 𝚖𝚒𝚗𝚒𝚖𝚘 𝚍𝚊 𝚝𝚛𝚊𝚜𝚏𝚛𝚒𝚛𝚎 𝚎 1 𝚞𝚗𝚒𝚝𝚢𝚌𝚘𝚒𝚗𝚜'
+    let users = global.db.data.users
+    if (costo > users[m.sender].limit) throw '𝚗𝚘𝚗 𝚑𝚊𝚒 𝚊𝚋𝚋𝚊𝚜𝚝𝚊𝚗𝚣𝚊 💶 𝚞𝚗𝚒𝚝𝚢𝚌𝚘𝚒𝚗𝚜 𝚙𝚎𝚛 𝚚𝚞𝚎𝚜𝚝𝚘 𝚝𝚛𝚊𝚜𝚏𝚎𝚛𝚒𝚖𝚎𝚗𝚝𝚘'
 
     // Esegui la transazione
-    users[m.sender].limit -= costo;
-    users[who].limit += Unitycoins;
+    users[m.sender].limit -= costo
+    users[who].limit += Unitycoins
 
-    // Messaggio di conferma per mittente
-    await conn.sendMessage(m.chat, {
-        text: global.t('transferSuccess', userId, groupId, {
-            amount: formatNumber(Unitycoins),
-            fee: formatNumber(tassaImporto),
-            total: formatNumber(costo)
-        }),
-        mentions: [who],
-        contextInfo: {
-            externalAdReply: {
-                title: '💸 Trasferimento UC',
-                body: `Inviati ${formatNumber(Unitycoins)} UC`,
-                thumbnailUrl: 'https://i.ibb.co/transfer-icon.png',
-                mediaType: 1,
-                renderLargerThumbnail: true
-            }
-        }
-    }, { quoted: m });
+    await m.reply(`*${-Unitycoins}* 💶 𝚞𝚗𝚒𝚝𝚢𝚌𝚘𝚒𝚗𝚜 
+𝚝𝚊𝚜𝚜𝚊 2% : *${-tassaImporto}* 💶 𝚝𝚊𝚜𝚜𝚊 𝚒𝚖𝚙𝚘𝚛𝚝o
+𝚝𝚘𝚝𝚊𝚕𝚎 𝚊𝚍𝚍𝚎𝚋𝚒𝚝𝚘: *${-costo}* 💶 𝚞𝚗𝚒𝚝𝚢𝚌𝚘𝚒𝚗𝚜`)
 
     // Notifica il destinatario
-    await conn.sendMessage(who, {
-        text: global.t('transferReceived', userId, groupId, { 
-            amount: formatNumber(Unitycoins) 
-        }),
-        mentions: [m.sender]
-    });
-
-    await conn.sendMessage(m.chat, { 
-        react: { text: '💸', key: m.key }
-    });
-};
-
-handler.help = ['transfer @user <amount>', 'bonifico @user <amount>'];
-handler.tags = ['economy'];
-handler.command = /^(daiUnitycoins|transfer|bonifico|trasferisci|donauc|pay)$/i;
-handler.register = true;
-
-export default handler;
-
-function formatNumber(num) {
-    return new Intl.NumberFormat('it-IT').format(num);
+    conn.fakeReply(m.chat, `*+${Unitycoins}* 💶 𝚞𝚗𝚒𝚝𝚢𝚌𝚘𝚒𝚗𝚜 𝚛𝚒𝚌𝚎𝚟𝚞𝚝𝚎!`, who, m.text)
 }
+
+handler.help = ['daiUnitycoins *@user <quantità>*']
+handler.tags = ['rpg']
+handler.command = ['daiUnitycoins', 'bonifico', 'trasferisci','donauc']
+handler.register = true 
+
+export default handler
