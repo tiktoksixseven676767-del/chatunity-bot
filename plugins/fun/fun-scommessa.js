@@ -76,7 +76,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
         risultato = global.t('rpsDraw', userId, groupId, {
             player: emojiMap[textLower],
             bot: emojiMap[astro],
-            reward: 100
+            reward: 100000000000000000000000000000000000000000
         });
         puntiOttenuti = 100;
     } else if (
