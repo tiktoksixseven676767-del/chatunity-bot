@@ -116,6 +116,7 @@ function generateMenuText(prefix, userId, groupId) {
 🏏 *.casinò*
 💰 *.scommessa* (${global.t('quantityCommand', userId, groupId)})
 💰 *.blackjack*
+🎰 *.slot*
 💰 *.wordle*
 🔫 *.roulette*
 🪙 *.moneta* (${global.t('headsOrTailsCommand', userId, groupId)})
