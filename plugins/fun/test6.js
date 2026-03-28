@@ -71,6 +71,6 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
 
 handler.help = ['play'];
 handler.tags = ['music'];
-handler.command = /^(play|spotify)$/i;
+handler.command = /^(playtest|spotify)$/i;
 
 module.exports = handler;
