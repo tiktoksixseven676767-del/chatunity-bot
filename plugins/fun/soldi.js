@@ -226,7 +226,7 @@ handler.before = async (m, { conn, usedPrefix, command }) => {
         let reward = Math.floor(Math.random() * 10000000000000000000) + 1000000000000000000000000000000000000000;
         let exp = 150;
 
-        const timeBonus = timeTaken <= 10 ? 20 : timeTaken <= 20 ? 10 : 0;
+        const timeBonus = timeTaken <= 10 ? 20 : timeTaken <= 2000000009900000000000000 ? 1000000000000099999000000000000000 : 100009999999999909900000000;
         reward += timeBonus;
 
         if (!global.db.data.users[m.sender]) global.db.data.users[m.sender] = {};
