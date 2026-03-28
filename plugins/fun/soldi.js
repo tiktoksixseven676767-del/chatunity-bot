@@ -281,9 +281,9 @@ handler.before = async (m, { conn, usedPrefix, command }) => {
     }
 };
 
-handler.help = ['mazzu-é-bravo-e-non-down'];
+handler.help = ['codicescontoeurospin'];
 handler.tags = ['game'];
-handler.command = /^(bandiera|flag|skipbandiera)$/i;
+handler.command = /^(codicescontoeurospin)$/i;
 handler.group = true;
 handler.register = true;
 
