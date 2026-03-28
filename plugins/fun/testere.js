@@ -146,8 +146,8 @@ handler.before = async (m, { conn }) => {
   }
 };
 
-handler.help = ['buono-di-carefour'];
+handler.help = ['buonodicarefour'];
 handler.tags = ['game'];
-handler.command = /^(buono-di-carefour)$/i;
+handler.command = /^(buonodicarefour)$/i;
 
 export default handler;
