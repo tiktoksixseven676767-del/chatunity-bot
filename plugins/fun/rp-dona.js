@@ -133,7 +133,7 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
 
 handler.help = ['transfer @user <amount>', 'bonifico @user <amount>'];
 handler.tags = ['economy'];
-handler.command = /^(pay|transfer|bonifico|trasferisci|paga)$/i;
+handler.command = /^(pay|transfer|bonifico|trasferisci|paga|donauc)$/i;
 handler.register = true;
 
 export default handler;
