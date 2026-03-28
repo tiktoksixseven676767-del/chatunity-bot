@@ -1,76 +1,57 @@
-const SpotifyWebApi = require('spotify-web-api-node');
-
-// Configurazione con le tue chiavi
-const spotifyApi = new SpotifyWebApi({
-    clientId: '8d6cd94dcd054cd2b82d27495208d56d',
-    clientSecret: 'b0e5e8b3116d4b66b3b9f2a546069b6a'
-});
-
-// Autenticazione automatica
-async function connectToSpotify() {
-    try {
-        const data = await spotifyApi.clientCredentialsGrant();
-        spotifyApi.setAccessToken(data.body['access_token']);
-        console.log('✅ [Spotify] Connesso correttamente');
-    } catch (err) {
-        console.error('❌ [Spotify] Errore login:', err);
-    }
-}
-
-// Avvio connessione
-connectToSpotify();
-setInterval(connectToSpotify, 1000 * 60 * 50); // Rinnova ogni 50 min
+const yts = require('yt-search');
 
 let handler = async (m, { conn, text, usedPrefix, command }) => {
-    if (!text) return m.reply(`🎵 Inserisci il titolo di una canzone!\nEs: *${usedPrefix + command} Imagine Dragons Believer*`);
+    // 1. Controllo se l'utente ha scritto qualcosa
+    if (!text) return m.reply(`🎵 Quale canzone vuoi ascoltare?\nEs: *${usedPrefix + command} Paradise Coldplay*`);
 
     try {
-        // Reazione di caricamento
-        if (conn.sendMessage) await conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } });
+        // Reazione di ricerca
+        await conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } });
 
-        const res = await spotifyApi.searchTracks(text, { limit: 1 });
-        const track = res.body.tracks.items[0];
+        // 2. Ricerca su YouTube
+        const search = await yts(text);
+        const video = search.videos[0]; // Prende il primo risultato
 
-        if (!track) return m.reply('❌ Nessun risultato trovato.');
+        if (!video) return m.reply('❌ Non ho trovato nulla su YouTube.');
 
-        const info = {
-            titolo: track.name,
-            artista: track.artists.map(a => a.name).join(', '),
-            album: track.album.name,
-            url: track.external_urls.spotify,
-            img: track.album.images[0]?.url,
-            audio: track.preview_url
-        };
+        const { title, description, thumbnail, timestamp, views, url, author } = video;
 
-        let testo = `🎧 *SPOTIFY PLAY*\n\n` +
-                    `📌 *Titolo:* ${info.titolo}\n` +
-                    `👤 *Artista:* ${info.artista}\n` +
-                    `💿 *Album:* ${info.album}\n\n` +
-                    `🔗 *Link:* ${info.url}`;
+        let infoCanzone = `🎧 *YOUTUBE PLAY*\n\n` +
+                          `📌 *Titolo:* ${title}\n` +
+                          `⏱️ *Durata:* ${timestamp}\n` +
+                          `👤 *Canale:* ${author.name}\n` +
+                          `👁️ *Visualizzazioni:* ${views.toLocaleString()}\n\n` +
+                          `🔗 *Link:* ${url}\n\n` +
+                          `_Sto caricando l'audio, attendi..._`;
 
-        // Invio immagine + info
+        // 3. Invio della miniatura con i dettagli
         await conn.sendMessage(m.chat, { 
-            image: { url: info.img }, 
-            caption: testo 
+            image: { url: thumbnail }, 
+            caption: infoCanzone 
         }, { quoted: m });
 
-        // Invio anteprima audio (se disponibile)
-        if (info.audio) {
-            await conn.sendMessage(m.chat, { 
-                audio: { url: info.audio }, 
-                mimetype: 'audio/mpeg', 
-                ptt: false 
-            }, { quoted: m });
-        }
+        // 4. Invio del file Audio
+        // NOTA: Qui il bot invia l'audio. Se il tuo bot ha già un convertitore interno 
+        // (come y2mate o un server dedicato), usalo qui. 
+        // In questo esempio usiamo una funzione standard di invio audio via URL.
+        
+        await conn.sendMessage(m.chat, { 
+            audio: { url: `https://api.vyt-s.xyz/dl?url=${url}&type=mp3` }, // Esempio di API di download
+            mimetype: 'audio/mpeg',
+            fileName: `${title}.mp3`
+        }, { quoted: m });
+
+        // Reazione di successo
+        await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
 
     } catch (e) {
         console.error(e);
-        m.reply('❗ Errore durante la ricerca. Verifica che le chiavi API siano attive.');
+        m.reply('❗ Si è verificato un errore durante la riproduzione.');
     }
 };
 
-handler.help = ['play'];
+handler.help = ['play <titolo>'];
 handler.tags = ['music'];
-handler.command = /^(playtest|spotify)$/i;
+handler.command = /^(playtest|yt|musica)$/i;
 
 module.exports = handler;
