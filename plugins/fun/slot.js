@@ -36,7 +36,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
         resultMsg += '│ ➕ *800 UC*\n'
         resultMsg += '│ ➕ *100 XP*\n'
         resultMsg += '└──────────────\n'
-        gifFile = './media/perdita.gif'  // Cambiato in GIF
+ 
     } else {
         user.limit = (user.limit || 0) - bet
         user.exp = Math.max(0, (user.exp || 0) - bet)
@@ -45,7 +45,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
         resultMsg += '│ ➖ *' + bet + ' UC*\n'
         resultMsg += '│ ➖ *' + bet + ' XP*\n'
         resultMsg += '└──────────────\n'
-        gifFile = './media/vincita.gif'  // Cambiato in GIF
+        
     }
 
 
