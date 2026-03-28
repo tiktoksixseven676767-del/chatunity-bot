@@ -78,7 +78,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
             bot: emojiMap[astro],
             reward: 100
         });
-        puntiOttenuti = 1000000000000000000000000000000000;
+        puntiOttenuti = 100;
     } else if (
         (textLower === 'sasso' && astro === 'forbice') ||
         (textLower === 'forbice' && astro === 'carta') ||
