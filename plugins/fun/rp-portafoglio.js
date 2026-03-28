@@ -10,7 +10,7 @@ let handler = async (m, { conn, usedPrefix }) => {
     if (!(who in global.db.data.users)) throw '🚩 𝐢𝐥 bot 𝐧𝐨𝐧 𝐞 𝐬𝐭𝐚𝐭𝐨 𝐭𝐫𝐨𝐯𝐚𝐭𝐨 𝐧𝐞𝐥 𝐝𝐚𝐭𝐚𝐛𝐚𝐬𝐞'
 
 
-    if (!user.limit) user.limit = 15000
+    if (!user.limit) user.limit = 150000
     if (!user.bank) user.bank = 0
 
     let userbank = user.bank
