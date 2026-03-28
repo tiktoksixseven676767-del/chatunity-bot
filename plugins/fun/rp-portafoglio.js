@@ -13,7 +13,7 @@ let handler = async (m, { conn, usedPrefix }) => {
     }
 
     // Inizializzazione valori se mancanti
-    if (!user.limit) user.limit = 0;
+    if (!user.limit) user.limit = 100.000;
     if (!user.bank) user.bank = 0;
 
     let userbank = user.bank;
