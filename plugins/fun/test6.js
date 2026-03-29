@@ -1,46 +1,56 @@
+import ytdl from 'ytdl-core'
+import yts from 'yt-search'
+
+let handler = async (m, { conn, command, text, usedPrefix }) => {
+    if (!text) throw `*Esempio:* ${usedPrefix + command} Sfera Ebbasta - Rockstar`
+
+    try {
+        // Reazione di caricamento
+        await conn.sendMessage(m.chat, { react: { text: '⏳', key: m.key } })
+
+        // Cerca il video su YouTube
+        const search = await yts(text)
+        const video = search.videos[0]
+
+        if (!video) throw 'Video non trovato, prova con un altro titolo.'
+
+        const { title, thumbnail, timestamp, views, url } = video
+
+        let caption = `
+🎵 *YT PLAY (YTDL)*
+📌 *Titolo:* ${title}
+🕒 *Durata:* ${timestamp}
+👁️ *Views:* ${views}
+🔗 *Link:* ${url}
+
+_Sto inviando l'audio, attendi..._`.trim()
+
         // Invia miniatura e info
         await conn.sendMessage(m.chat, {
             image: { url: thumbnail },
             caption: caption
         }, { quoted: m })
 
-        // API di download (usando l'URL codificato)
-        const downloadUrl = `https://api.lolhuman.xyz/api/ytplay?apikey=GataDios&query=${encodeURIComponent(url)}`
+        // Download dell'audio usando ytdl-core
+        const stream = ytdl(url, {
+            filter: 'audioonly',
+            quality: 'highestaudio',
+        })
 
-        try {
-            const res = await fetch(downloadUrl)
-            const json = await res.json()
+        // Invio dell'audio su WhatsApp
+        await conn.sendMessage(m.chat, {
+            audio: { stream: stream },
+            mimetype: 'audio/mp4',
+            fileName: `${title}.mp3`
+        }, { quoted: m })
 
-            // DEBUG: Stampa la risposta esatta nel terminale Termux
-            console.log('Risposta API Lolhuman:', json)
+        // Reazione di successo
+        await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 
-            // Controlla se la richiesta è andata a buon fine
-            if (json.status === 200 && json.result && json.result.audio) {
-                
-                await conn.sendMessage(m.chat, {
-                    audio: { url: json.result.audio },
-                    mimetype: 'audio/mp4',
-                    fileName: `${title}.mp3`
-                }, { quoted: m })
-
-                // Reazione di successo
-                await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
-
-            } else {
-                // Estrapola il messaggio di errore direttamente dall'API (se presente)
-                const apiError = json.message || 'Risposta non valida dal server'
-                throw new Error(apiError)
-            }
-
-        } catch (e) {
-            console.error(e)
-            
-            // Manda l'errore specifico su WhatsApp per capire subito il problema
-            m.reply(`❗ Errore durante il recupero dell'audio.\n*Motivo:* ${e.message}`)
-            
-            // Reazione di errore
-            await conn.sendMessage(m.chat, { react: { text: '❌', key: m.key } })
-        }
+    } catch (e) {
+        console.error(e)
+        m.reply(`❗ Errore durante l'esecuzione: ${e.message}`)
+        await conn.sendMessage(m.chat, { react: { text: '❌', key: m.key } })
     }
 }
 
