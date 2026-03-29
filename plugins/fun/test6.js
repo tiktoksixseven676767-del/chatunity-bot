@@ -1,47 +1,125 @@
-import fetch from 'node-fetch'
+'use strict';
 
-let handler = async (m, { conn, text, usedPrefix, command }) => {
-    if (!text) throw `*Esempio:* ${usedPrefix + command} Sfera Ebbasta Visconti`
+const playdl = require('play-dl');
+const axios  = require('axios');
 
-    try {
-        await conn.sendMessage(m.chat, { react: { text: '☁️', key: m.key } })
+const FALLBACK_APIS = (link) => [
+    `https://apiskeith.top/download/audio?url=${encodeURIComponent(link)}`,
+    `https://api.siputzx.my.id/api/d/ytmp3?url=${encodeURIComponent(link)}`,
+    `https://api.davidcyriltech.my.id/download/ytmp3?url=${encodeURIComponent(link)}`,
+    `https://api.akuari.my.id/downloader/youtubeaudio?link=${encodeURIComponent(link)}`
+];
 
-        // API per ricerca e download da SoundCloud (Gratuita)
-        const res = await fetch(`https://api.vreden.my.id/api/soundcloud?query=${encodeURIComponent(text)}`)
-        const json = await res.json()
+module.exports = {
+    commands:    ['play', 'music'],
+    description: 'Search and download a song from YouTube',
+    permission:  'public',
+    group:       true,
+    private:     true,
 
-        if (json.status !== 200 || !json.result) {
-            throw new Error('Brano non trovato su SoundCloud')
+    run: async (sock, message, args, { sender, contextInfo }) => {
+        const query = args.join(' ').trim();
+        if (!query) {
+            return sock.sendMessage(sender, {
+                text: '❌ Usage: `.play <song name or YouTube link>`',
+                contextInfo
+            }, { quoted: message });
         }
 
-        const { title, duration, thumbnail, download } = json.result
+        const wait = await sock.sendMessage(sender, {
+            text: `🔍 Searching: *${query}*...`,
+            contextInfo
+        }, { quoted: message });
 
-        let caption = `🎵 *SOUNDCLOUD PLAY*\n📌 *Titolo:* ${title}\n🕒 *Durata:* ${duration}\n\n_Scarico l'audio da SoundCloud..._`
+        try {
+            // ── Step 1: resolve YouTube URL ──────────────────────────────
+            let videoUrl, title, artist, thumbnail, duration;
 
-        // Invia info e miniatura
-        await conn.sendMessage(m.chat, {
-            image: { url: thumbnail },
-            caption: caption
-        }, { quoted: m })
+            const isUrl = /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)/.test(query);
 
-        // Invia l'audio
-        await conn.sendMessage(m.chat, {
-            audio: { url: download },
-            mimetype: 'audio/mp4',
-            fileName: `${title}.mp3`
-        }, { quoted: m })
+            if (isUrl) {
+                const info = await playdl.video_info(query);
+                const det  = info.video_details;
+                videoUrl  = query;
+                title     = det.title || 'Unknown Title';
+                artist    = det.channel?.name || 'Unknown Artist';
+                thumbnail = det.thumbnails?.[det.thumbnails.length - 1]?.url || '';
+                duration  = det.durationRaw || '';
+            } else {
+                const results = await playdl.search(query, { source: { youtube: 'video' }, limit: 1 });
+                if (!results?.length) throw new Error('No results found');
+                const v = results[0];
+                videoUrl  = v.url;
+                title     = v.title || 'Unknown Title';
+                artist    = v.channel?.name || 'Unknown Artist';
+                thumbnail = v.thumbnails?.[v.thumbnails.length - 1]?.url || '';
+                duration  = v.durationRaw || '';
+            }
 
-        await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
+            // ── Step 2: send info card ────────────────────────────────────
+            await sock.sendMessage(sender, {
+                image:   { url: thumbnail || 'https://files.catbox.moe/5uli5p.jpeg' },
+                caption:
+                    `🎵 *${title}*\n` +
+                    `🎤 *Artist:* ${artist}\n` +
+                    `⏱ *Duration:* ${duration}\n\n` +
+                    `_Downloading audio..._`,
+                contextInfo
+            }, { quoted: message });
 
-    } catch (e) {
-        console.error(e)
-        m.reply(`❗ Errore: ${e.message}`)
-        await conn.sendMessage(m.chat, { react: { text: '❌', key: m.key } })
+            // ── Step 3: try play-dl stream first ─────────────────────────
+            let audioBuffer = null;
+            try {
+                const stream = await playdl.stream(videoUrl, { quality: 2 });
+                const chunks = [];
+                for await (const chunk of stream.stream) chunks.push(chunk);
+                audioBuffer = Buffer.concat(chunks);
+            } catch (streamErr) {
+                console.warn('[Music] play-dl stream failed:', streamErr.message, '— trying APIs');
+            }
+
+            // ── Step 4: fallback to public APIs ───────────────────────────
+            let audioUrl = null;
+            if (!audioBuffer) {
+                for (const url of FALLBACK_APIS(videoUrl)) {
+                    try {
+                        const { data } = await axios.get(url, { timeout: 25000 });
+                        const dl =
+                            (typeof data?.result === 'string' ? data.result : null) ||
+                            data?.result?.downloadUrl ||
+                            data?.result?.url ||
+                            data?.download ||
+                            data?.url ||
+                            data?.link;
+                        if (dl) { audioUrl = dl; break; }
+                    } catch { /* next */ }
+                }
+            }
+
+            if (!audioBuffer && !audioUrl) {
+                throw new Error('All download methods failed. Try again later.');
+            }
+
+            // ── Step 5: send audio ────────────────────────────────────────
+            const audioPayload = audioBuffer
+                ? { audio: audioBuffer, mimetype: 'audio/mpeg' }
+                : { audio: { url: audioUrl }, mimetype: 'audio/mpeg' };
+
+            await sock.sendMessage(sender, { ...audioPayload, contextInfo }, { quoted: message });
+
+            // ── Step 6: send as downloadable file ────────────────────────
+            const safeTitle = title.replace(/[^\w\s-]/g, '').trim().slice(0, 50);
+            const docPayload = audioBuffer
+                ? { document: audioBuffer, mimetype: 'audio/mpeg', fileName: `${safeTitle}.mp3` }
+                : { document: { url: audioUrl }, mimetype: 'audio/mpeg', fileName: `${safeTitle}.mp3` };
+
+            await sock.sendMessage(sender, { ...docPayload, contextInfo }, { quoted: message });
+
+        } catch (err) {
+            await sock.sendMessage(sender, {
+                text: `❌ *Could not download:* ${err.message}`,
+                contextInfo
+            }, { quoted: message });
+        }
     }
-}
-
-handler.help = ['scplay']
-handler.tags = ['downloader']
-handler.command = /^(scplay|soundcloud)$/i
-
-export default handler
+};
