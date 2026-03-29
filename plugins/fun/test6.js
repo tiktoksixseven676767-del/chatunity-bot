@@ -2,7 +2,7 @@ import ytdl from 'ytdl-core'
 import yts from 'yt-search'
 
 let handler = async (m, { conn, command, text, usedPrefix }) => {
-    if (!text) throw `*Esempio:* ${usedPrefix + command} Sfera Ebbasta`
+    if (!text) return m.reply('Inserisci il titolo di una canzone!')
 
     try {
         await conn.sendMessage(m.chat, { react: { text: '⏳', key: m.key } })
@@ -13,7 +13,7 @@ let handler = async (m, { conn, command, text, usedPrefix }) => {
 
         const { title, thumbnail, timestamp, url } = video
 
-        let caption = `🎵 *YT PLAY*\n📌 *Titolo:* ${title}\n🕒 *Durata:* ${timestamp}\n\n_Invio in corso..._`
+        let caption = `🎵 *YT PLAY*\n📌 *Titolo:* ${title}\n🕒 *Durata:* ${timestamp}\n\n_Invio audio in corso..._`
 
         await conn.sendMessage(m.chat, {
             image: { url: thumbnail },
@@ -35,13 +35,13 @@ let handler = async (m, { conn, command, text, usedPrefix }) => {
 
     } catch (e) {
         console.error(e)
-        m.reply(`❗ Errore: ${e.message}`)
+        m.reply('❗ Errore durante il download. Riprova tra poco.')
         await conn.sendMessage(m.chat, { react: { text: '❌', key: m.key } })
     }
 }
 
 handler.help = ['play']
 handler.tags = ['downloader']
-handler.command = /^(play|yt)$/i
+handler.command = /^(play|yt|ytmp3)$/i
 
 export default handler
