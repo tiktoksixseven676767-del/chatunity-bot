@@ -13,48 +13,47 @@ let handler = async (m, { conn, command, text, usedPrefix }) => {
 
         const { title, thumbnail, timestamp, url } = video
 
-        let caption = `🎵 *YT PLAY*\n📌 *Titolo:* ${title}\n🕒 *Durata:* ${timestamp}\n\n_Invio audio in corso..._`
+        let caption = `🎵 *YT PLAY*\n📌 *Titolo:* ${title}\n🕒 *Durata:* ${timestamp}\n\n_Caricamento audio in corso..._`
 
         await conn.sendMessage(m.chat, {
             image: { url: thumbnail },
             caption: caption
         }, { quoted: m })
 
-        // Proviamo la nuova API (Aykut API - Gratuita)
-        const apiRes = await fetch(`https://api.agatz.xyz/api/ytmp3?url=${encodeURIComponent(url)}`)
-        const json = await apiRes.json()
+        // USIAMO L'API DI LUSION (Solitamente molto stabile)
+        const response = await fetch(`https://api.lusion.top/api/ytmp3?url=${encodeURIComponent(url)}`)
+        const data = await response.json()
 
-        if (json.status === 200 && json.data.url) {
+        if (data.status && data.result) {
             await conn.sendMessage(m.chat, {
-                audio: { url: json.data.url },
+                audio: { url: data.result.download_url || data.result },
                 mimetype: 'audio/mp4',
                 fileName: `${title}.mp3`
             }, { quoted: m })
 
             await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
         } else {
-            throw new Error('API sovraccarica')
+            throw new Error('Fallback')
         }
 
     } catch (e) {
         console.error(e)
-        // Se la prima API fallisce, proviamo una seconda di riserva
+        // Se fallisce anche questa, usiamo un convertitore web diretto (Last Resort)
         try {
-            const res2 = await fetch(`https://api.botcahx.eu.org/api/dowloader/ytvoice?url=${text}&apikey=GI0u8q9p`)
-            const json2 = await res2.json()
-            if (json2.result && json2.result.url) {
-                 await conn.sendMessage(m.chat, {
-                    audio: { url: json2.result.url },
+            const backup = await fetch(`https://api.zenkey.my.id/api/download/ytmp3?url=${encodeURIComponent(text)}`)
+            const res = await backup.json()
+            if (res.result && res.result.download_url) {
+                await conn.sendMessage(m.chat, {
+                    audio: { url: res.result.download_url },
                     mimetype: 'audio/mp4',
-                    fileName: `audio.mp3`
+                    fileName: `${text}.mp3`
                 }, { quoted: m })
                 await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
             } else {
-                throw new Error()
+                m.reply('❌ Tutte le API sono attualmente offline. YouTube ha bloccato i server. Riprova tra un po\'.')
             }
-        } catch (e2) {
-            m.reply(`❗ Errore: Le API di YouTube sono momentaneamente bloccate. Riprova tra 5 minuti.`)
-            await conn.sendMessage(m.chat, { react: { text: '❌', key: m.key } })
+        } catch (err) {
+            m.reply('❌ Errore critico di connessione.')
         }
     }
 }
