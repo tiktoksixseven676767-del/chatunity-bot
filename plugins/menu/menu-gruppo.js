@@ -79,6 +79,7 @@ function generateMenuText(prefix, userId, groupId) {
 🎥 *.ytsearch*
 🌐 *.tts*
 👾 .*${global.t('githubsearch')}*
+📧 *.creanail*
 🔊 *.tomp3* (${global.t('videoCommand', userId, groupId)})`),
         createSection(global.t('infoUtilitySection', userId, groupId), `
 🌍 *.meteo* (${global.t('cityCommand', userId, groupId)})
