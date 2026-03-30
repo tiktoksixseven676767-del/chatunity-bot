@@ -89,7 +89,7 @@ function generateMenuText(prefix, userId, groupId) {
 📜 *.regole*
 📜 *.dashboard*
 🛡️ *.offusca*`),
-test
+
 
  createSection(global.t('imageEditSection', userId, groupId), `
 🛠️ *.sticker* (${global.t('photoToStickerCommand', userId, groupId)})
