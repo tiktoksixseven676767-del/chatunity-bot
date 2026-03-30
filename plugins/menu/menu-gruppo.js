@@ -96,6 +96,7 @@ function generateMenuText(prefix, userId, groupId) {
 📷 *.hd* (${global.t('improveQualityCommand', userId, groupId)})
 🤕 *.bonk* (${global.t('memeCommand', userId, groupId)})
 🖼️ *.toimg* (${global.t('fromStickerCommand', userId, groupId)})
+🖨️ *.rivela*
 🎴 *.hornycard* [@${global.t('userCommand', userId, groupId)}]
 🧠 *.stupido/a* @
 🌀 *.emojimix*
