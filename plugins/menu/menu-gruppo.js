@@ -152,6 +152,7 @@ function generateMenuText(prefix, userId, groupId) {
 💋 *.bacia* @${global.t('userCommand', userId, groupId)}
 😡 *.odio* @${global.t('userCommand', userId, groupId)}
 🗣️ *.rizz* @${global.t('userCommand', userId, groupId)} (${global.t('charmCommand', userId, groupId)})
+🥙 *.kebab*
 ☠️ *.minaccia* @${global.t('userCommand', userId, groupId)}
 🔥 *.zizzania* @${global.t('userCommand', userId, groupId)} (${global.t('createFightCommand', userId, groupId)})
 💋 *.ditalino* @
