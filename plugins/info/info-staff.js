@@ -14,8 +14,8 @@ let handler = async (m, { conn }) => {
 
     // Schede di contatto (vCard)
     const vcards = [
-        { vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;mazzu | CEO;;;\nFN:Vale | CEO\nORG:𝐂𝐡𝐚𝐭𝐔𝐧𝐢𝐭𝐲\nTITLE:CEO\nitem1.TEL;waid=393773842461:+39 3391952345\nitem1.X-ABLabel:Cellulare\nEND:VCARD` },
-        { vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;mazzu (bot);;;\nFN:Diego\nORG:𝐂𝐡𝐚𝐭𝐔𝐧𝐢𝐭𝐲\nTITLE:Staff\nitem1.TEL;waid=393520583119:+212 783-587782\nitem1.X-ABLabel:Cellulare\nEND:VCARD` },
+        { vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;mazzu | CEO;;;\nFN:mazzu | CEO\nORG:𝐂𝐡𝐚𝐭𝐔𝐧𝐢𝐭𝐲\nTITLE:CEO\nitem1.TEL;waid=3393391952345:+39 3391952345\nitem1.X-ABLabel:Cellulare\nEND:VCARD` },
+        { vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;mazzu (bot);;;\nFN:mazzu\nORG:𝐂𝐡𝐚𝐭𝐔𝐧𝐢𝐭𝐲\nTITLE:Staff\nitem1.TEL;waid=212783587782:+212 783-587782\nitem1.X-ABLabel:Cellulare\nEND:VCARD` },
    
 
     // Testo elegante con i numeri in chiaro
