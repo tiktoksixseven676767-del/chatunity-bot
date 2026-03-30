@@ -5,7 +5,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     let bet = args[0] ? parseInt(args[0]) : 20
 
     if (isNaN(bet) || bet <= 0) {
-        return conn.reply(m.chat, '❌ Puntata non valida.\nEsempio: *' + usedPrefix + command + ' 100*DIO CANE BASTARDO IPNOTIZZATO E MASTURBATO DALLA MADONNA EBREA CREMATA NEI CAMPI DI CONCENTRAMENTO', m)
+        return conn.reply(m.chat, '❌ Puntata non valida.\nEsempio: *' + usedPrefix + command + ' 100*', m)
     }
 
     if ((user.limit || 0) < bet) {
