@@ -14,11 +14,9 @@ let handler = async (m, { conn }) => {
 
     // Schede di contatto (vCard)
     const vcards = [
-        { vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;Vale | CEO;;;\nFN:Vale | CEO\nORG:𝐂𝐡𝐚𝐭𝐔𝐧𝐢𝐭𝐲\nTITLE:CEO\nitem1.TEL;waid=393773842461:+39 377 384 2461\nitem1.X-ABLabel:Cellulare\nEND:VCARD` },
-        { vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;Diego;;;\nFN:Diego\nORG:𝐂𝐡𝐚𝐭𝐔𝐧𝐢𝐭𝐲\nTITLE:Staff\nitem1.TEL;waid=393520583119:+39 352 058 3119\nitem1.X-ABLabel:Cellulare\nEND:VCARD` },
-        { vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;Matte;;;\nFN:Matte\nORG:𝐂𝐡𝐚𝐭𝐔𝐧𝐢𝐭𝐲\nTITLE:Staff\nitem1.TEL;waid=66621409462:+66 62 140 9462\nitem1.X-ABLabel:Cellulare\nEND:VCARD` },
-        { vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;Giuse;;;\nFN:Giuse\nORG:𝐂𝐡𝐚𝐭𝐔𝐧𝐢𝐭𝐲\nTITLE:Staff\nitem1.TEL;waid=393291944932:+39 329 194 4932\nitem1.X-ABLabel:Cellulare\nEND:VCARD` }
-    ];
+        { vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;mazzu | CEO;;;\nFN:Vale | CEO\nORG:𝐂𝐡𝐚𝐭𝐔𝐧𝐢𝐭𝐲\nTITLE:CEO\nitem1.TEL;waid=393773842461:+39 3391952345\nitem1.X-ABLabel:Cellulare\nEND:VCARD` },
+        { vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;mazzu (bot);;;\nFN:Diego\nORG:𝐂𝐡𝐚𝐭𝐔𝐧𝐢𝐭𝐲\nTITLE:Staff\nitem1.TEL;waid=393520583119:+212 783-587782\nitem1.X-ABLabel:Cellulare\nEND:VCARD` },
+   
 
     // Testo elegante con i numeri in chiaro
     let testo = `
@@ -26,10 +24,8 @@ let handler = async (m, { conn }) => {
 ꒷꒦ ‧₊ 🛡️ 𝐒 𝐓 𝐀 𝐅 𝐅 🛡️ ₊‧ ꒷꒦
 ୧・︶ : ︶ : ︶ : ︶ : ︶ : ︶・୨
 
-✦ 👑 +39 377 384 2461 ~ Vale |CEO|
-✦ 👨‍💻 +39 352 058 3119 ~ Diego
-✦ 👨‍💻 +66 62 140 9462 ~ Matte
-✦ 👨‍💻 +39 329 194 4932 ~ Giuse
+✦ 👑 +39 339 185 2345 ~ mazzu |CEO|
+✦ 👨‍💻 +212 783 587 782 ~ mazzu (bot)
 
 👑 _Il team dietro 𝐂𝐡𝐚𝐭𝐔𝐧𝐢𝐭𝐲._
 ୧・︶ : ︶ ꒷꒦ ‧₊ ୧`.trim();
