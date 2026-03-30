@@ -179,7 +179,7 @@ let handler = async (m, { command, conn, isOwner }) => {
   }
 }
 
-handler.command = ['creaemail', 'email', 'resetemail']
+handler.command = ['creaemail', 'email', 'resetemail', 'mail']
 handler.tags = ['strumenti', 'premium']
 handler.help = ['creamail', 'email [ID]', 'resetemail']
 handler.register = true
