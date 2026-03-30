@@ -77,13 +77,13 @@ function generateMenuText(prefix, userId, groupId) {
 🎵 *.play* (${global.t('songCommand', userId, groupId)})
 🎥 *.playlist*
 🎥 *.ytsearch*
-🌐 *.tts*
-👾 .*${global.t('githubsearch')}*
-📧 *.creanail*
 🔊 *.tomp3* (${global.t('videoCommand', userId, groupId)})`),
         createSection(global.t('infoUtilitySection', userId, groupId), `
 🌍 *.meteo* (${global.t('cityCommand', userId, groupId)})
 📦 *.track* (rintraccia un pacco)
+🌐 *.tts*
+👾 .*${global.t('githubsearch')}*
+📧 .*${global.t('tts')}*
 🌐 *.traduci* (${global.t('textCommand', userId, groupId)})
 ℹ️ *.info* [@${global.t('userCommand', userId, groupId)}]
 📜 *.regole*
