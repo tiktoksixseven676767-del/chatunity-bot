@@ -2,9 +2,9 @@ import fetch from 'node-fetch';
 
 let handler = async (m, { conn, text, usedPrefix, command }) => {
     if (!text) {
-        return await conn.reply(m.chat, ,`DIO CANE BASTARDO IPNOTIZZATO E MASTURBATO DALLA MADONNA EBREA CREMATA NEI CAMPI DI CONCENTRAMENTO`
+        return await conn.reply(m.chat, ,`『 📖 』 - \`Inserisci il nome della repo/utente per la ricerca\`
 
-\`Esempio:\` *${usedPrefix}${command} varebot*`, m)
+\`Esempio:\` *${usedPrefix}${command} chatunity*`, m)
     }
     let waitMessage = await conn.reply(m.chat, '*🔍 Ricerca in corso...*', m)
 
@@ -51,6 +51,6 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
 
 handler.help = ['githubsearch', 'ghsearch']
 handler.tags = ['ricerca']
-handler.command = /^(githubsearch|ghsearch|minorenni)$/i
+handler.command = /^(githubsearch|ghsearch)$/i
 
 export default handler
