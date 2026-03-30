@@ -156,7 +156,7 @@ let handler = async (m, { command, conn, isOwner }) => {
     }
 
     case 'resetmail': {
-      if (!activeEmails.has(userJid)) return m.reply('❌ *Non hai una email temporanea da resettare.* Usa *.creamail* per crearne una.')
+      if (!activeEmails.has(userJid)) return m.reply('❌ *Non hai una mail temporanea da resettare.* Usa *.creamail* per crearne una.')
 
       if (!canReset(userJid, isOwner)) {
         return m.reply('⛔ *Hai superato il limite di reset consentiti oppure stai eseguendo il reset troppo velocemente.*\nContatta un admin o passa premium per aumentare i reset.')
@@ -170,7 +170,7 @@ let handler = async (m, { command, conn, isOwner }) => {
       return m.reply(
         `🔄 *Email temporanea resettata con successo!* 🔄\n\n` +
         `📧 *${newAccount.email}*\n\n` +
-        `📩 Usa *.email* per controllare i messaggi.`
+        `📩 Usa *.mail* per controllare i messaggi.`
       )
     }
 
@@ -179,9 +179,9 @@ let handler = async (m, { command, conn, isOwner }) => {
   }
 }
 
-handler.command = ['creaemail', 'email', 'resetemail', 'mail']
+handler.command = ['creamail', 'mail', 'resetmail']
 handler.tags = ['strumenti', 'premium']
-handler.help = ['creamail', 'email [ID]', 'resetemail']
+handler.help = ['creamail', 'mail [ID]', 'resetmail']
 handler.register = true
 handler.premium = false // Non ancora
 export default handler
