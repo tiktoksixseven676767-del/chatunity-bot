@@ -176,4 +176,4 @@ ${sections.join('\n\n')}
 │ ୭ ˚. ᵎᵎ 🎀
 │ ${global.t('versionLabel', userId, groupId)}: ${vs}
 ╰★────★────★╯`.trim();
-}
+} 
