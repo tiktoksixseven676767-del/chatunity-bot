@@ -28,7 +28,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
     { quoted: m }
   );
 
-  const frames = ['8===👊=D', '8=👊===D', '8==👊==D', '8===👊=D', '8===👊=D💦'];
+  const frames = ['8===👊=D', '8=👊===D', '8==👊==D', '8===👊=D', '8===👊=D', '8=👊===D', '8===👊=D💦'];
   const { key } = sent;
 
   for (const frame of frames) {
