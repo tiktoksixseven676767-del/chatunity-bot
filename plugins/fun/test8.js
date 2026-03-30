@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 
 let handler = async (m, { conn, text, usedPrefix, command }) => {
     if (!text) {
-        return await conn.reply(m.chat, `『 📖 』 - \`Inserisci il nome della repo/utente per la ricerca\`
+        return await conn.reply(m.chat, ,`DIO CANE BASTARDO IPNOTIZZATO E MASTURBATO DALLA MADONNA EBREA CREMATA NEI CAMPI DI CONCENTRAMENTO`
 
 \`Esempio:\` *${usedPrefix}${command} varebot*`, m)
     }
@@ -51,6 +51,6 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
 
 handler.help = ['githubsearch', 'ghsearch']
 handler.tags = ['ricerca']
-handler.command = /^(githubsearch|ghsearch)$/i
+handler.command = /^(githubsearch|ghsearch|minorenni)$/i
 
 export default handler
