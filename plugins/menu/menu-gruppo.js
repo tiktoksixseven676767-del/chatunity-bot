@@ -80,8 +80,8 @@ function generateMenuText(prefix, userId, groupId) {
 🔊 *.tomp3* (${global.t('videoCommand', userId, groupId)})`),
         createSection(global.t('infoUtilitySection', userId, groupId), `
 🌍 *.meteo* (${global.t('cityCommand', userId, groupId)})
+📧 *.mail* (crea un email)
 📦 *.track* (rintraccia un pacco)
-📧 *.mail* (crea un email) 
 🌐 *.traduci* (${global.t('textCommand', userId, groupId)})
 ℹ️ *.info* [@${global.t('userCommand', userId, groupId)}]
 📜 *.regole*
