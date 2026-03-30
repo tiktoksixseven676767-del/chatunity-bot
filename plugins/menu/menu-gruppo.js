@@ -81,7 +81,7 @@ function generateMenuText(prefix, userId, groupId) {
         createSection(global.t('infoUtilitySection', userId, groupId), `
 🌍 *.meteo* (${global.t('cityCommand', userId, groupId)})
 📦 *.track* (rintraccia un pacco)
-📧 *.mail* (crea un email)
+📧 *.mail* (crea un email) 
 🌐 *.traduci* (${global.t('textCommand', userId, groupId)})
 ℹ️ *.info* [@${global.t('userCommand', userId, groupId)}]
 📜 *.regole*
