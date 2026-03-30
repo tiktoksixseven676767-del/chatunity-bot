@@ -60,7 +60,7 @@ ${cta}
 [https://github.com/chatunitycenter/chatunity-bot](https://github.com/chatunitycenter/chatunity-bot)
 
 ୧ ${videoLabel}
-[https://youtu.be/-FZYK-vj4BY](https://youtu.be/-FZYK-vj4BY)
+[https://github.com/tiktoksixseven676767-del/chatunity-bot.git)
 ꒷꒦ ✦ ୧・︶ : ︶ ꒷꒦ ‧₊ ୧
 
 > ${needHelp}
