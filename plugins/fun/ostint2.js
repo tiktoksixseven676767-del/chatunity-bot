@@ -4,18 +4,22 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
   let who = m.mentionedJid && m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : text ? text.replace(/[^0-9]/g, '') + '@s.whatsapp.net' : m.sender
   let snumber = who.split('@')[0]
   
-  // Effetto caricamento nei messaggi
+  // Messaggio di caricamento iniziale
   let { key } = await conn.sendMessage(m.chat, { text: '`[SYSTEM]: Inizializzazione protocollo OSINT...`' }, { quoted: m })
-  await new Promise(res => setTimeout(res, 1000))
-  await conn.editMessage(key, '`[SYSTEM]: Violazione database in corso: [||||      ] 40%`')
-  await new Promise(res => setTimeout(res, 1000))
-  await conn.editMessage(key, '`[SYSTEM]: Estrazione pacchetti completata: [||||||||||] 100%`')
+  
+  // Funzione interna per editare il messaggio senza errori
+  const edit = async (txt) => await conn.sendMessage(m.chat, { text: txt, edit: key })
+
+  await new Promise(res => setTimeout(res, 800))
+  await edit('`[SYSTEM]: Violazione database in corso: [||||      ] 40%`')
+  await new Promise(res => setTimeout(res, 800))
+  await edit('`[SYSTEM]: Estrazione pacchetti completata: [||||||||||] 100%`')
 
   try {
     // Recupero dati WA
-    let bio = await conn.fetchStatus(who).catch(_ => 'Privata/Non disponibile')
+    let bio = await conn.fetchStatus(who).catch(_ => 'Riservata/Privata')
     let pp = await conn.profilePictureUrl(who, 'image').catch(_ => 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png')
-    let user = global.db.data.users[who]
+    let user = global.db.data.users[who] || {}
     
     // Analisi Prefisso e Nazione
     let prefix = snumber.slice(0, 2)
@@ -24,48 +28,49 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
     let c = countryData[0] || {}
 
     let report = `
-✨ *REPORT INVESTIGATIVO v2.0* ✨
+✨ *REPORT INVESTIGATIVO OSINT* ✨
   
-╔═════════『 *IDENTITÀ* 』═════════╗
+┏━━━━━━━『 *IDENTITÀ* 』━━━━━━━┓
 ┃ 🆔 *ID:* ${who.replace('@s.whatsapp.net', '')}
 ┃ 👤 *USER:* @${snumber}
 ┃ 📝 *STATUS:* ${bio.status || bio}
-┃ 📅 *SET BIO:* ${bio.setAt || 'N/A'}
-╚══════════════════════════════╝
+┃ 📅 *BIO_SET:* ${bio.setAt || 'Non rilevato'}
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-╔═════════『 *GEOLOCAL* 』═════════╗
-┃ 🗺️ *REGION:* ${c.subregion || 'Sconosciuta'}
-┃ 🚩 *COUNTRY:* ${c.name?.common || 'N/A'} ${c.flag || ''}
+┏━━━━━━━『 *LOCALIZZAZIONE* 』━━━━━━━┓
+┃ 🗺️ *REGIONE:* ${c.subregion || 'Sconosciuta'}
+┃ 🚩 *NAZIONE:* ${c.name?.common || 'N/A'} ${c.flag || ''}
 ┃ 🏙️ *CAPITALE:* ${c.capital ? c.capital[0] : 'N/A'}
 ┃ 🕒 *TIMEZONE:* ${c.timezones ? c.timezones[0] : 'UTC'}
 ┃ 💰 *VALUTA:* ${c.currencies ? Object.keys(c.currencies)[0] : 'N/A'}
-╚══════════════════════════════╝
+┃ 📍 *COORDINATE:* ${c.latlng ? c.latlng.join(', ') : 'N/A'}
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-╔═════════『 *NETWORK* 』═════════╗
-┃ 📡 *PROVIDER:* Analisi Carrier...
-┃ 📶 *SIGNAL:* Verificato (WhatsApp MD)
-┃ 🔌 *PREFIX:* +${prefix} (International)
-┃ 🔗 *WA.ME:* https://wa.me/${snumber}
-╚══════════════════════════════╝
+┏━━━━━━━『 *TECNICO* 』━━━━━━━┓
+┃ 📡 *CARRIER:* +${prefix} (Global Network)
+┃ 📶 *SISTEMA:* WhatsApp Multi-Device
+┃ 🔗 *WA_LINK:* wa.me/${snumber}
+┃ 🗺️ *MAPS:* https://www.google.com/maps?q=${c.latlng ? c.latlng.join(',') : '0,0'}
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-╔═════════『 *BOT DATA* 』═════════╗
-┃ 🪙 *MONETE:* ${user?.limit || 0}
-┃ 🏆 *LIVELLO:* ${user?.level || 0}
-┃ 🎭 *RUOLO:* ${user?.role || 'User'}
-╚══════════════════════════════╝
+┏━━━━━━━『 *DATABASE BOT* 』━━━━━━━┓
+┃ 🪙 *MONETE:* ${user.limit || 0}
+┃ 🏆 *LIVELLO:* ${user.level || 0}
+┃ 🎭 *RUOLO:* ${user.role || 'Utente'}
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-> *Protocollo eseguito con successo.*
+> *[LOG]: Scansione terminata con successo.*
 `.trim()
 
-    await conn.sendFile(m.chat, pp, 'error.jpg', report, m, false, { mentions: [who] })
+    await conn.sendFile(m.chat, pp, 'osint.jpg', report, m, false, { mentions: [who] })
     await conn.sendMessage(m.chat, { react: { text: "💉", key: m.key } })
     
-    // Cancella il messaggio di caricamento dopo aver inviato il report
+    // Elimina il messaggio di caricamento
     await conn.sendMessage(m.chat, { delete: key })
 
   } catch (e) {
     console.error(e)
-    conn.editMessage(key, '❌ `[FATAL_ERROR]`: Accesso negato dal firewall di WhatsApp.')
+    await edit('❌ `[FATAL_ERROR]`: Il firewall ha bloccato l\'estrazione dei dati.')
   }
 }
 
