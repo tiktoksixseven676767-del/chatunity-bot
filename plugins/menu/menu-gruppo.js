@@ -82,7 +82,7 @@ function generateMenuText(prefix, userId, groupId) {
 🌍 *.meteo* (${global.t('cityCommand', userId, groupId)})
 📦 *.track* (rintraccia un pacco)
 💻 *.ip* (trova info da un ip)
-
+💻 *.lookup* (piccolo ostint)
 🌐 *.tts*
 👾 .*${global.t('githubsearch')}*
 📧 .*${global.t('tts')}*
