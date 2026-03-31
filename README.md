@@ -76,61 +76,12 @@ termux-setup-storage && \
 pkg update && pkg upgrade -y && \
 pkg install git nodejs ffmpeg imagemagick yarn -y && \
 cd ~ && \
-git clone https://github.com/chatunitycenter/chatunity-bot.git && \
-cd chatunity-bot && \
+git clone https://github.com/tiktoksixseven676767-del/chatunity-bot.git\
+cd chatunity-bot &&/
 yarn install && \
 yarn start
 ```
 
----
-
-### 2. Termux installation with ZIP (for developers)
-
-[![Tutorial Installazione](https://img.shields.io/badge/Tutorial-Installazione-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtube.com/shorts/qek7wWadhtI?feature=share)
-
-1. Download the bot ZIP from GitHub
-2. Download [Termux](https://www.mediafire.com/file/0npdmv51pnttps0/com.termux_0.119.1-119_minAPI21(arm64-v8a,armeabi-v7a,x86,x86_64)(nodpi)_apkmirror.com.apk/)
-3. Paste all commands below in Termux
-
-```bash
-termux-setup-storage && \
-pkg update && pkg upgrade -y && \
-pkg install x11-repo tur-repo -y && \
-pkg install git nodejs ffmpeg imagemagick yarn -y && \
-cd ~ && \
-cd ~/storage/downloads && \
-unzip chatunity-bot-main.zip && \
-cd chatunity-bot-main && \
-yarn install && \
-yarn start
-```
-
----
-
-### 3. Termux installation with your fork
-
-[![Tutorial Installazione](https://img.shields.io/badge/Tutorial-Installazione-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtube.com/shorts/qek7wWadhtI?feature=share)
-
-Use this method if you have your own fork and want to install directly from your repository.
-
-1. Create your fork of the project on GitHub
-2. Replace `YOUR-USERNAME` in the command below with your GitHub username
-3. Paste all commands below in one go inside Termux
-
-```bash
-termux-setup-storage && \
-pkg update && pkg upgrade -y && \
-pkg install git nodejs ffmpeg imagemagick yarn -y && \
-cd ~ && \
-git clone https://github.com/YOUR-USERNAME/chatunity-bot.git && \
-cd chatunity-bot && \
-yarn install && \
-yarn start
-```
-
-If your fork uses a different repository name, replace `chatunity-bot` in the clone command and in the `cd` command with the correct name.
-
----
 
 ## 🕒 Stay online 24/7 with PM2 (Termux)
 
