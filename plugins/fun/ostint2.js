@@ -4,63 +4,69 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
   let who = m.mentionedJid && m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : text ? text.replace(/[^0-9]/g, '') + '@s.whatsapp.net' : m.sender
   let snumber = who.split('@')[0]
   
-  let { key } = await conn.sendMessage(m.chat, { text: '`[SISTEMA]: Avvio scansione euristica...`' }, { quoted: m })
+  // Animazione caricamento
+  let { key } = await conn.sendMessage(m.chat, { text: '`[SYSTEM]: Inizializzazione scansione Social...`' }, { quoted: m })
   const edit = async (txt) => await conn.sendMessage(m.chat, { text: txt, edit: key })
 
   try {
-    await edit('`[ANALISI]: Recupero metadati WhatsApp...`')
+    await edit('`[ANALISI]: Tracking impronta digitale...`')
     let bio = await conn.fetchStatus(who).catch(_ => 'Privata')
+    let pushname = conn.getName(who) || 'Sconosciuto'
     let pp = await conn.profilePictureUrl(who, 'image').catch(_ => 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png')
     
-    // Verifica se è Business (Metodo nativo Baileys)
+    // Check Business
     let isBusiness = false
     try {
-        const businessData = await conn.getBusinessProfile(who)
-        if (businessData) isBusiness = true
+        const busi = await conn.getBusinessProfile(who)
+        if (busi) isBusiness = true
     } catch (e) { isBusiness = false }
 
-    await edit('`[ANALISI]: Interrogazione registri internazionali...`')
+    await edit('`[ANALISI]: Generazione link sociali... [||||||] 70%`')
+    
     let prefix = snumber.slice(0, 2)
-    let res = await fetch(`https://restcountries.com/v3.1/callingcode/${prefix}`)
-    let countryData = await res.json()
-    let c = countryData[0] || {}
+    let resCountry = await fetch(`https://restcountries.com/v3.1/callingcode/${prefix}`)
+    let c = await resCountry.json()
+    let country = c[0] || {}
 
     let report = `
-🔍 *ARCHIVIO INTELLIGENCE OSINT* 🔍
+🔍 *ARCHIVIO INTELLIGENCE AVANZATO* 🔍
   
-┏━━━━━━━『 *DATI UTENTE* 』━━━━━━━┓
-┃ 📑 *ACCOUNT:* ${isBusiness ? '💼 BUSINESS' : '👤 PERSONALE'}
-┃ 📱 *WHATSAPP:* wa.me/${snumber}
+┏━━━━━━━『 *IDENTITÀ* 』━━━━━━━┓
+┃ 👤 *NOME:* ${pushname}
+┃ 💼 *TIPO:* ${isBusiness ? 'BUSINESS' : 'PERSONALE'}
+┃ 💬 *WHATSAPP:* wa.me/${snumber}
 ┃ 🏷️ *BIO:* ${bio.status || bio}
-┃ 🕙 *ULTIMO SET:* ${bio.setAt || 'Sconosciuto'}
+┃ 🚩 *ORIGINE:* ${country.name?.common || 'N/A'} ${country.flag || ''}
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-┏━━━━━━━『 *ORIGINE CELLA* 』━━━━━━━┓
-┃ 📍 *NAZIONE:* ${c.name?.common || 'N/A'} ${c.flag || ''}
-┃ 🏙️ *CAPITALE:* ${c.capital ? c.capital[0] : 'N/A'}
-┃ 🕒 *TIMEZONE:* ${c.timezones ? c.timezones[0] : 'UTC'}
-┃ 🌍 *MAPPA:* https://www.google.com/maps?q=${c.latlng ? c.latlng.join(',') : '0,0'}
+┏━━━━━━━『 *IMPRONTA SOCIAL* 』━━━━━━━┓
+┃ ✈️ *TELEGRAM:* [Verifica Account](https://t.me/+${snumber})
+┃ 👥 *FACEBOOK:* [Cerca Numero](https://www.facebook.com/search/top/?q=%2B${snumber})
+┃ 📸 *INSTAGRAM:* [Lookup User](https://www.instagram.com/explore/tags/${snumber})
+┃ 🐦 *TWITTER/X:* [Cerca Post](https://twitter.com/search?q=%2B${snumber})
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-┏━━━━━━━『 *MOTORI ESTERNI* 』━━━━━━━┓
-┃ 🕵️‍♂️ *GOOGLE:* https://www.google.com/search?q="${snumber}"
-┃ 📞 *TRUECALLER:* https://www.truecaller.com/search/it/${snumber}
-┃ 👥 *FACEBOOK:* https://www.facebook.com/search/top/?q=${snumber}
+┏━━━━━━━『 *TRUECALLER POVERI* 』━━━━━━━┓
+┃ 📞 *CHI CHIAMA:* [Database Italia](https://www.chichiama.it/numero/${snumber}.html)
+┃ 🔎 *TELLOWS:* [Segnalazioni Spam](https://www.tellows.it/num/${snumber})
+┃ 🕵️‍♂️ *TRUECALLER:* [Identifica Nome](https://www.truecaller.com/search/it/${snumber})
+┃ 🕵️‍♂️ *GOOGLE:* [Deep Search](https://www.google.com/search?q=%22${snumber}%22)
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-> *[INFO]: Clicca sui link sopra per approfondire la ricerca su database terzi.*
+> *[LOG]: Scansione completata. Clicca sui link blu per approfondire l'indagine.*
 `.trim()
 
     await conn.sendFile(m.chat, pp, 'osint.jpg', report, m, false, { mentions: [who] })
     await conn.sendMessage(m.chat, { delete: key })
 
   } catch (e) {
-    await edit('❌ `[ERRORE]`: Impossibile completare la scansione profonda.')
+    console.error(e)
+    await edit('❌ `[ERROR]`: Errore critico nel modulo Social-Scan.')
   }
 }
 
 handler.help = ['osint @tag']
 handler.tags = ['tools']
-handler.command = /^(osint|lookup|info)$/i
+handler.command = /^(osint|lookup|truecaller)$/i
 
 export default handler
