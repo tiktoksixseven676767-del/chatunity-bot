@@ -6,32 +6,30 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
     return
   }
 
+  // Reazione di attesa
   await conn.sendMessage(m.chat, { react: { text: "⏳", key: m.key } })
 
   try {
-    // TENTATIVO 1: API di Ame-Api (Molto veloce)
-    let res = await fetch(`https://api.agatz.xyz/api/tiktok?url=${encodeURIComponent(text)}`)
+    // COSTRUZIONE AUTOMATICA DEL LINK API + LINK UTENTE
+    // Usiamo l'endpoint di Botcahx che è molto affidabile per i link vm.tiktok
+    let api_url = `https://api.botcahx.eu.org/api/dowloader/tikok?url=${encodeURIComponent(text)}&apikey=btcz87`
+    
+    let res = await fetch(api_url)
     let json = await res.json()
 
-    let audioUrl
-    let title
-    let cover
-
-    if (json.status === 200) {
-      audioUrl = json.data.music
-      title = json.data.title
-      cover = json.data.cover
-    } else {
-      // TENTATIVO 2 (Fallback): Se la prima fallisce, proviamo un'altra
+    // Controllo se l'API ha risposto correttamente (status: true o 200)
+    if (!json.status) {
+      // Secondo tentativo con API alternativa se la prima fallisce
       let res2 = await fetch(`https://api.tiklydown.eu.org/api/download?url=${encodeURIComponent(text)}`)
-      let json2 = await res2.json()
-      
-      if (!json2 || !json2.music) throw 'Entrambe le API sono offline'
-      
-      audioUrl = json2.music.play_url
-      title = json2.title
-      cover = json2.video.cover
+      json = await res2.json()
     }
+
+    // Estrazione dati (gestisce diversi formati di risposta)
+    let audioUrl = json.result?.music?.play_url || json.music?.play_url || json.result?.audio
+    let title = json.result?.title || json.title || 'TikTok Audio'
+    let cover = json.result?.video?.cover || json.video?.cover || json.result?.cover
+
+    if (!audioUrl) throw 'Audio non trovato'
 
     const doc = {
       audio: { url: audioUrl },
@@ -42,8 +40,8 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
         externalAdReply: {
           showAdAttribution: true,
           mediaType: 1,
-          title: title || 'TikTok Audio',
-          body: 'Scaricato con Successo',
+          title: title,
+          body: 'TikTok MP3 Downloader',
           thumbnailUrl: cover,
           sourceUrl: text
         }
@@ -54,9 +52,9 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
     await conn.sendMessage(m.chat, { react: { text: "✅", key: m.key } })
 
   } catch (err) {
-    console.error('Errore TikTok:', err)
+    console.error('Errore:', err)
     await conn.sendMessage(m.chat, { react: { text: "❌", key: m.key } })
-    await conn.reply(m.chat, '❌ Errore: Tutte le API di download sono attualmente sature o il link è privato/non valido.', m)
+    await conn.reply(m.chat, '❌ Errore nell\'estrazione dell\'audio. Riprova con un altro link.', m)
   }
 }
 
