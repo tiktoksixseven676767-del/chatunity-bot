@@ -81,7 +81,8 @@ function generateMenuText(prefix, userId, groupId) {
         createSection(global.t('infoUtilitySection', userId, groupId), `
 🌍 *.meteo* (${global.t('cityCommand', userId, groupId)})
 📦 *.track* (rintraccia un pacco)
-💻 *.ip* (trova informazioni da un ip)
+💻 *.ip* (trova info da un ip)
+
 🌐 *.tts*
 👾 .*${global.t('githubsearch')}*
 📧 .*${global.t('tts')}*
