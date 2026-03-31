@@ -57,7 +57,7 @@ ${features}
 ${cta}
 ꒷꒦ ✦ ୧・︶ : ︶ ꒷꒦ ‧₊ ୧
 ୧ ${repoLabel}
-[https://github.com/chatunitycenter/chatunity-bot](https://github.com/chatunitycenter/chatunity-bot)
+(https://github.com/tiktoksixseven676767-del/chatunity-bot.git\)
 
 ୧ ${videoLabel}
 [https://github.com/tiktoksixseven676767-del/chatunity-bot.git)
