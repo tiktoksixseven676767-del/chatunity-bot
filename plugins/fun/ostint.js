@@ -1,18 +1,20 @@
 import fetch from 'node-fetch'
 
 let handler = async (m, { conn, text, usedPrefix, command }) => {
-  // 1. Controllo se l'utente ha inserito il numero
+  // 1. Verifica se l'utente ha fornito un numero
   if (!text) {
     return conn.reply(m.chat, `『 🔍 』 *Inserisci un numero di telefono*\n\n*✧ Esempio:* \n${usedPrefix}${command} 13022612667`, m)
   }
 
-  // Pulizia del numero (rimuove spazi, + o trattini se presenti)
+  // Pulizia del numero: tiene solo le cifre (rimuove +, spazi, ecc.)
   let phoneNumber = text.replace(/[^0-9]/g, '')
 
+  // Feedback visivo di caricamento
   await conn.sendMessage(m.chat, { react: { text: "🔎", key: m.key } })
 
   // --- CONFIGURAZIONE RAPIDAPI ---
-  const RAPIDAPI_KEY = 'IL_TUO_TOKEN_QUI' // <--- Incolla qui la tua Key di RapidAPI
+  // Sostituisci 'LA_TUA_CHIAVE_RAPIDAPI' con la tua Key personale
+  const RAPIDAPI_KEY = 'LA_TUA_CHIAVE_RAPIDAPI' 
   const url = 'https://whatsapp-osint.p.rapidapi.com/bizos'
   
   const options = {
@@ -28,32 +30,37 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
   try {
     let res = await fetch(url, options)
     
-    // Se l'API non risponde correttamente (es. 401 Unauthorized o 429 Too Many Requests)
     if (!res.ok) {
-        throw new Error(`Errore API: ${res.status} ${res.statusText}`)
+        throw new Error(`Errore API: ${res.status} - Assicurati che la Key sia corretta.`)
     }
 
     let json = await res.json()
 
-    // Controllo se abbiamo dati validi
+    // Controllo se l'API ha restituito dati
     if (!json || Object.keys(json).length === 0) {
-      return conn.reply(m.chat, '❌ Nessuna informazione trovata per questo numero.', m)
+      await conn.sendMessage(m.chat, { react: { text: "❌", key: m.key } })
+      return conn.reply(m.chat, '❌ Nessuna informazione trovata per questo numero o profilo non pubblico.', m)
     }
 
-    // Costruzione del messaggio di risposta (Adatta i campi in base alla risposta reale dell'API)
-    let caption = `『 🔍 *RISULTATI OSINT* 🔍 』\n\n`
+    // Costruzione del messaggio di risposta
+    let caption = `『 🔍 *RISULTATI WHATSAPP OSINT* 🔍 』\n\n`
     caption += `*• Numero:* ${phoneNumber}\n`
     
-    // Esempio di mappatura dati (modifica in base a cosa restituisce l'API bizos)
+    // Mappatura dei campi (l'API bizos restituisce dettagli sui profili business/pubblici)
     if (json.name) caption += `*• Nome:* ${json.name}\n`
     if (json.biz_description) caption += `*• Bio:* ${json.biz_description}\n`
+    if (json.category) caption += `*• Categoria:* ${json.category}\n`
     if (json.address) caption += `*• Indirizzo:* ${json.address}\n`
     if (json.email) caption += `*• Email:* ${json.email}\n`
-    if (json.website) caption += `*• Sito:* ${json.website}\n`
+    if (json.website && json.website.length > 0) {
+        caption += `*• Sito Web:* ${json.website[0]}\n`
+    }
     
-    // Se l'API restituisce un'immagine del profilo
-    if (json.profile_pic) {
-        await conn.sendFile(m.chat, json.profile_pic, 'osint.jpg', caption, m)
+    // Se l'API restituisce un'immagine del profilo (profile_pic o image)
+    let image = json.profile_pic || json.image
+    
+    if (image) {
+        await conn.sendFile(m.chat, image, 'osint.jpg', caption, m)
     } else {
         await conn.reply(m.chat, caption, m)
     }
