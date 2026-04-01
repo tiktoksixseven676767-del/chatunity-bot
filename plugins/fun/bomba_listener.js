@@ -12,36 +12,41 @@ handler.before = async function (m, { conn }) {
     if (!session || session.status !== 'attiva') return;
     
     let risposta = m.text ? m.text.trim().toLowerCase() : "";
-    if (risposta.length < 3) return; // Troppo corta
+    if (risposta.length < 3) return; 
 
-    // --- FUNZIONE CONTROLLO PAROLA REALE ---
+    // Solo se inizia con la lettera giusta
+    if (!risposta.startsWith(session.lettera.toLowerCase())) return;
+
+    // Solo se è il turno del possessore o se la bomba è libera
+    if (session.possessore && session.possessore !== senderId) return;
+
+    // --- NUOVO CONTROLLO PAROLA (Più preciso) ---
     async function esegueControllo(parola) {
         try {
-            // Usiamo un'API di dizionario o un controllo di Free Dictionary
-            // Nota: Se l'API non trova la parola, restituisce errore 404
-            const res = await axios.get(`https://it.wiktionary.org/w/api.php?action=query&titles=${encodeURIComponent(parola)}&format=json`)
-            const pages = res.data.query.pages;
-            return !pages["-1"]; // Se la pagina esiste, la parola è valida
+            // Usiamo l'API di Google Dizionario (tramite un proxy affidabile)
+            const res = await axios.get(`https://api.dictionaryapi.dev/api/v2/entries/it/${encodeURIComponent(parola)}`)
+            return res.status === 200;
         } catch (e) {
-            return false;
+            // Se il dizionario specifico fallisce, usiamo un fallback su Wiktionary corretto
+            try {
+                const fallback = await axios.get(`https://it.wiktionary.org/api/rest_v1/page/title/${encodeURIComponent(parola)}`)
+                return fallback.status === 200;
+            } catch (err) {
+                return false;
+            }
         }
     }
 
-    // Se la parola non inizia con la lettera corretta, ignora
-    if (!risposta.startsWith(session.lettera.toLowerCase())) return;
-
-    // Controllo se è il turno del possessore o se la bomba è libera
-    if (session.possessore && session.possessore !== senderId) return;
-
-    // Validazione parola reale
     const isValid = await esegueControllo(risposta);
+    
     if (!isValid) {
-        return m.reply(`❌ *"${risposta.toUpperCase()}"* non sembra una parola italiana valida! Riprova.`);
+        // Se la parola è chiaramente inventata (poche vocali o lettere a caso) la bocciamo
+        // Ma se sembra una parola umana, potresti voler essere meno severo
+        return m.reply(`❌ *"${risposta.toUpperCase()}"* non è nel dizionario!`);
     }
 
     // --- LOGICA DI PASSAGGIO ---
     if (session.possessore === senderId) {
-        // Il possessore ha risposto bene: la lancia
         session.lettera = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'L', 'M', 'N', 'P', 'R', 'S', 'T', 'V'][Math.floor(Math.random() * 15)];
         session.possessore = null; 
         
@@ -50,10 +55,9 @@ handler.before = async function (m, { conn }) {
             mentions: [senderId]
         });
     } else if (!session.possessore) {
-        // La bomba era libera e qualcuno l'ha presa
         session.possessore = senderId;
         await conn.sendMessage(chatId, {
-            text: `🏃‍♂️ @${senderId.split('@')[0]} ha preso la bomba! \nPresto, scrivi un'altra parola con *${session.lettera}* per passarla!`,
+            text: `🏃‍♂️ @${senderId.split('@')[0]} ha preso la bomba! \nScrivi subito un'altra parola con *${session.lettera}* per passarla!`,
             mentions: [senderId]
         });
     }
