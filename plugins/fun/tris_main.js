@@ -28,10 +28,9 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
             mentions: [senderId]
         }, { quoted: m });
 
-        // Auto-eliminazione dopo 5 minuti se nessuno entra
         setTimeout(() => {
             if (global.trisSessions[roomId] && global.trisSessions[roomId].status === 'waiting') {
-                conn.sendMessage(chatId, { text: `⏰ Stanza *${roomName}* chiusa per inattività.` });
+                conn.sendMessage(chatId, { text: `⏰ Stanza *${roomName}* chiusa.` });
                 delete global.trisSessions[roomId];
             }
         }, 5 * 60 * 1000);
@@ -57,11 +56,11 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
             boardTxt += em[i] + ((i + 1) % 3 === 0 ? "\n" : "  ");
         }
 
-        // GIF Animata per inizio partita
+        // NUOVA GIF PINTEREST
         let msg = await conn.sendMessage(chatId, { 
-            video: { url: 'https://upload.wikimedia.org/wikipedia/commons/7/7d/Tic-tac-toe-animated.gif' },
+            video: { url: 'https://i.pinimg.com/originals/2f/52/13/2f5213443520758b6ad5667681e80d3f.gif' },
             gifPlayback: true,
-            caption: `🎮 Sfida Iniziata in *${roomName}*!\n❌ @${s.p1.split('@')[0]}\n⭕ @${senderId.split('@')[0]}\n\n${boardTxt}\n\nTocca a @${s.p1.split('@')[0]}!\n\n*(Rispondi a questo messaggio con un numero)*`,
+            caption: `🎮 Sfida Iniziata in *${roomName}*!\n❌ @${s.p1.split('@')[0]}\n⭕ @${senderId.split('@')[0]}\n\n${boardTxt}\n\nTocca a @${s.p1.split('@')[0]}!`,
             mentions: [s.p1, senderId]
         });
         s.lastMsg = msg.key.id;
