@@ -7,7 +7,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
 
     // --- COMANDO .tris <nome> ---
     if (command === 'tris') {
-        if (!text) return m.reply(`Indica un nome per la stanza!\nEsempio: *${usedPrefix}tris sfida1*`);
+        if (!text) return m.reply(`crea un nome per la stanza!\nEsempio: *${usedPrefix}tris sfida1*`);
         let roomName = text.toLowerCase().trim();
         let roomId = chatId + roomName;
 
