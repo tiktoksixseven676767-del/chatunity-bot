@@ -3,7 +3,6 @@ global.trisSessions = global.trisSessions || {};
 let handler = m => m;
 
 handler.before = async function (m, { conn }) {
-    // Controlla se il messaggio è un numero 1-9 in risposta a un messaggio del bot
     if (!m.quoted || !m.text || !/^[1-9]$/.test(m.text.trim())) return;
     if (!m.quoted.fromMe) return;
 
@@ -11,7 +10,6 @@ handler.before = async function (m, { conn }) {
     const senderId = m.sender;
     const move = parseInt(m.text.trim()) - 1;
 
-    // Cerca la stanza tramite l'ID del messaggio citato
     let roomId = Object.keys(global.trisSessions).find(id => 
         id.startsWith(chatId) && global.trisSessions[id].lastMsg === m.quoted.id
     );
@@ -22,10 +20,8 @@ handler.before = async function (m, { conn }) {
     if (s.status !== 'playing' || s.turn !== senderId) return;
     if (s.board[move]) return m.reply('Casella occupata!');
 
-    // Esegui mossa
     s.board[move] = (senderId === s.p1) ? 'X' : 'O';
 
-    // Funzioni di rendering interne
     const render = (b) => {
         const em = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
         let out = "";
@@ -46,9 +42,9 @@ handler.before = async function (m, { conn }) {
 
     let result = check(s.board);
     if (result) {
-        let finalStr = `${render(s.board)}\n\n` + (result === 'Pareggio' ? "🤝 Pareggio!" : `🏆 @${(result === 'X' ? s.p1 : s.p2).split('@')[0]} ha vinto la partita!`);
+        let finalStr = `${render(s.board)}\n\n` + (result === 'Pareggio' ? "🤝 Pareggio!" : `🏆 @${(result === 'X' ? s.p1 : s.p2).split('@')[0]} vince!`);
         
-        // Immagine Globo per la vittoria/fine
+        // Immagine Globo per la vittoria
         await conn.sendMessage(chatId, { 
             image: { url: 'https://www.globo.it/wp-content/uploads/2018/12/Il-gioco-del-tris-1536x1025.jpg' },
             caption: finalStr, 
@@ -58,15 +54,15 @@ handler.before = async function (m, { conn }) {
     } else {
         s.turn = (senderId === s.p1) ? s.p2 : s.p1;
         
-        // GIF per ogni turno di gioco
+        // GIF Animata per ogni turno
         let newMsg = await conn.sendMessage(chatId, { 
-            video: { url: 'https://raw.githubusercontent.com/Fokusid/Database/main/Games/tris.gif' },
+            video: { url: 'https://upload.wikimedia.org/wikipedia/commons/7/7d/Tic-tac-toe-animated.gif' },
             gifPlayback: true,
-            caption: `🎮 Stanza: *${s.name}*\n\n${render(s.board)}\n\nTocca a @${s.turn.split('@')[0]}\n*(Rispondi con un numero)*`,
+            caption: `🎮 Stanza: *${s.name}*\n\n${render(s.board)}\n\nTocca a @${s.turn.split('@')[0]}`,
             mentions: [s.turn]
         }, { quoted: m });
         
-        s.lastMsg = newMsg.key.id; // Aggiorna l'ID per la prossima risposta
+        s.lastMsg = newMsg.key.id;
     }
     return true;
 };
