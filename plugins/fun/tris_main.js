@@ -4,7 +4,6 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
     const chatId = m.chat;
     const senderId = m.sender;
 
-    // --- COMANDO .tris <nome> ---
     if (command === 'tris') {
         if (!text) return m.reply(`Indica un nome per la stanza!\nEsempio: *${usedPrefix}tris sfida1*`);
         let roomName = text.toLowerCase().trim();
@@ -22,33 +21,32 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
             lastMsg: null
         };
 
-        // Immagine statica per la creazione stanza (Globo)
+        // Immagine Globo per creazione stanza
         await conn.sendMessage(chatId, { 
             image: { url: 'https://www.globo.it/wp-content/uploads/2018/12/Il-gioco-del-tris-1536x1025.jpg' },
             caption: `🎮 Stanza *${roomName}* creata da @${senderId.split('@')[0]}!\n\nSfidante, scrivi: *.entratris ${roomName}*`,
             mentions: [senderId]
         }, { quoted: m });
 
-        // Timeout auto-distruzione (5 minuti)
+        // Auto-eliminazione dopo 5 minuti se nessuno entra
         setTimeout(() => {
             if (global.trisSessions[roomId] && global.trisSessions[roomId].status === 'waiting') {
-                conn.sendMessage(chatId, { text: `⏰ Stanza *${roomName}* eliminata per inattività.` });
+                conn.sendMessage(chatId, { text: `⏰ Stanza *${roomName}* chiusa per inattività.` });
                 delete global.trisSessions[roomId];
             }
         }, 5 * 60 * 1000);
         return;
     }
 
-    // --- COMANDO .entratris <nome> ---
     if (command === 'entratris') {
         if (!text) return m.reply(`Specifica il nome della stanza.`);
         let roomName = text.toLowerCase().trim();
         let roomId = chatId + roomName;
         let s = global.trisSessions[roomId];
 
-        if (!s) return m.reply(`La stanza *${roomName}* non esiste.`);
+        if (!s) return m.reply(`Stanza non trovata.`);
         if (s.status === 'playing') return m.reply(`Partita già in corso.`);
-        if (s.p1 === senderId) return m.reply(`Non puoi sfidare te stesso.`);
+        if (s.p1 === senderId) return m.reply(`Non puoi giocare da solo.`);
 
         s.p2 = senderId;
         s.status = 'playing';
@@ -59,9 +57,9 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
             boardTxt += em[i] + ((i + 1) % 3 === 0 ? "\n" : "  ");
         }
 
-        // GIF per l'inizio partita (usiamo un URL GitHub per evitare il 403)
+        // GIF Animata per inizio partita
         let msg = await conn.sendMessage(chatId, { 
-            video: { url: 'https://raw.githubusercontent.com/Fokusid/Database/main/Games/tris.gif' },
+            video: { url: 'https://upload.wikimedia.org/wikipedia/commons/7/7d/Tic-tac-toe-animated.gif' },
             gifPlayback: true,
             caption: `🎮 Sfida Iniziata in *${roomName}*!\n❌ @${s.p1.split('@')[0]}\n⭕ @${senderId.split('@')[0]}\n\n${boardTxt}\n\nTocca a @${s.p1.split('@')[0]}!\n\n*(Rispondi a questo messaggio con un numero)*`,
             mentions: [s.p1, senderId]
@@ -70,8 +68,5 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
     }
 };
 
-handler.help = ['tris', 'entratris'];
-handler.tags = ['games'];
 handler.command = /^(tris|entratris)$/i;
-
 export default handler;
