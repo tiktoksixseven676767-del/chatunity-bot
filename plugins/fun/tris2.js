@@ -1,82 +1,85 @@
-// Oggetto globale per gestire le sessioni attive
-const trisSessions = new Map();
+let trisSessions = {};
 
-/**
- * .tris - Comando per giocare a Tris senza API
- * Linguaggio: Node.js
- */
+let handler = async (m, { conn, text, usedPrefix, command }) => {
+    const chatId = m.chat;
+    const senderId = m.sender;
 
-const renderBoard = (board) => {
-    let text = "🎮 *SFIDA A TRIS* 🎮\n\n";
-    const icons = board.map((cell, i) => cell === 'X' ? '❌' : (cell === 'O' ? '⭕' : `*${i + 1}*`));
-    
-    text += `${icons[0]} | ${icons[1]} | ${icons[2]}\n`;
-    text += `---+---+---\n`;
-    text += `${icons[3]} | ${icons[4]} | ${icons[5]}\n`;
-    text += `---+---+---\n`;
-    text += `${icons[6]} | ${icons[7]} | ${icons[8]}\n\n`;
-    return text;
+    // Se l'utente vuole resettare o forzare la chiusura
+    if (text === 'reset' || text === 'stop') {
+        delete trisSessions[chatId];
+        return m.reply('🎮 Partita di Tris terminata.');
+    }
+
+    // Se non c'è una sessione attiva, inizializzala
+    if (!trisSessions[chatId]) {
+        trisSessions[chatId] = {
+            board: Array(9).fill(null),
+            turn: senderId,
+            status: 'playing'
+        };
+        return m.reply(`🎮 *TRIS INIZIATO*\n\n${renderBoard(trisSessions[chatId].board)}\n\nInvia un numero da *1 a 9* per fare la tua mossa.\nUsa *${usedPrefix + command} stop* per annullare.`);
+    }
+
+    let session = trisSessions[chatId];
+
+    // Gestione mossa
+    let move = parseInt(text) - 1;
+    if (isNaN(move) || move < 0 || move > 8 || session.board[move] !== null) {
+        return m.reply('❌ Mossa non valida. Scegli un numero da 1 a 9 tra le caselle libere.');
+    }
+
+    // Mossa del giocatore (X)
+    session.board[move] = 'X';
+
+    // Controllo vittoria giocatore
+    let result = checkWinner(session.board);
+    if (result) return finishGame(chatId, conn, m, result);
+
+    // Mossa del Bot (O) - Logica semplice: prima casella libera
+    let emptyCells = session.board.map((v, i) => v === null ? i : null).filter(v => v !== null);
+    if (emptyCells.length > 0) {
+        let cpuMove = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+        session.board[cpuMove] = 'O';
+    }
+
+    // Controllo vittoria Bot
+    result = checkWinner(session.board);
+    if (result) return finishGame(chatId, conn, m, result);
+
+    // Mostra scacchiera aggiornata
+    await m.reply(renderBoard(session.board) + `\n\nTocca a te! Scegli la prossima mossa.`);
 };
 
-const checkWinner = (b) => {
+// Funzioni di supporto
+function renderBoard(board) {
+    let text = "";
+    for (let i = 0; i < 9; i++) {
+        text += board[i] ? (board[i] === 'X' ? '❌' : '⭕') : ` ${i + 1}️ `;
+        if ((i + 1) % 3 === 0) text += "\n";
+    }
+    return text;
+}
+
+function checkWinner(b) {
     const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
     for (let [a, b_idx, c] of wins) {
         if (b[a] && b[a] === b[b_idx] && b[a] === b[c]) return b[a];
     }
-    return b.includes(null) ? null : 'tie';
-};
-
-// Esempio di integrazione nel tuo handler
-// if (cmd === 'tris') {
-
-if (trisSessions.has(m.chat)) {
-    return client.sendMessage(m.chat, { text: "❌ C'è già una partita in corso in questa chat!" });
+    return b.includes(null) ? null : 'Pareggio';
 }
 
-trisSessions.set(m.chat, {
-    board: Array(9).fill(null),
-    turn: m.sender, // Chi lancia il comando inizia per primo
-    players: [m.sender], // Puoi aggiungere logica per il secondo giocatore
-    active: true,
-    lastMove: Date.now()
-});
-
-const game = trisSessions.get(m.chat);
-await client.sendMessage(m.chat, { 
-    text: renderBoard(game.board) + "Tocca a te! Invia il numero della casella (1-9)." 
-});
-
-// } 
-
-// Logica di risposta (da mettere dove gestisci i messaggi in arrivo)
-// Se il messaggio è un numero e c'è una sessione attiva...
-if (!isNaN(m.body) && trisSessions.has(m.chat)) {
-    const session = trisSessions.get(m.chat);
-    const move = parseInt(m.body) - 1;
-
-    if (move >= 0 && move <= 8 && !session.board[move]) {
-        session.board[move] = 'X'; // Qui puoi alternare X e O se implementi il multiplayer
-        const winner = checkWinner(session.board);
-
-        if (winner) {
-            let result = renderBoard(session.board);
-            result += winner === 'tie' ? "🤝 Pareggio!" : "🏆 Hai vinto!";
-            await client.sendMessage(m.chat, { text: result });
-            trisSessions.delete(m.chat);
-        } else {
-            // Qui potresti inserire una mossa automatica del bot (CPU) 
-            // per rendere il gioco "Single Player" senza API
-            const emptyCells = session.board.map((v, i) => v === null ? i : null).filter(v => v !== null);
-            const cpuMove = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-            session.board[cpuMove] = 'O';
-
-            const cpuWinner = checkWinner(session.board);
-            if (cpuWinner) {
-                await client.sendMessage(m.chat, { text: renderBoard(session.board) + "💀 Ha vinto il bot!" });
-                trisSessions.delete(m.chat);
-            } else {
-                await client.sendMessage(m.chat, { text: renderBoard(session.board) + "Tocca a te!" });
-            }
-        }
-    }
+async function finishGame(chatId, conn, m, winner) {
+    let session = trisSessions[chatId];
+    let msg = renderBoard(session.board) + "\n\n";
+    if (winner === 'Pareggio') msg += "🤝 *Pareggio!*";
+    else msg += winner === 'X' ? "🏆 *Hai vinto tu!*" : "💀 *Ha vinto il bot!*";
+    
+    await m.reply(msg);
+    delete trisSessions[chatId];
 }
+
+handler.help = ['tris', 'tris stop'];
+handler.tags = ['games'];
+handler.command = /^(tris|tictactoe)$/i;
+
+export default handler;
