@@ -1,0 +1,56 @@
+global.minatoSessions = global.minatoSessions || {};
+
+let handler = async (m, { conn, usedPrefix, command }) => {
+    const chatId = m.chat;
+    if (global.minatoSessions[chatId]) return m.reply("💣 Hai già una partita in corso! Scrivi le coordinate (es: 1 5) o aspetta che finisca.");
+
+    const size = 9;
+    const bombsCount = 10;
+    let board = Array(size).fill().map(() => Array(size).fill(0));
+    let revealed = Array(size).fill().map(() => Array(size).fill(false));
+
+    // Posizionamento bombe
+    let placed = 0;
+    while (placed < bombsCount) {
+        let r = Math.floor(Math.random() * size);
+        let c = Math.floor(Math.random() * size);
+        if (board[r][c] !== '💣') {
+            board[r][c] = '💣';
+            placed++;
+        }
+    }
+
+    // Calcolo numeri adiacenti
+    for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+            if (board[r][c] === '💣') continue;
+            let count = 0;
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    if (board[r + i]?.[c + j] === '💣') count++;
+                }
+            }
+            board[r][c] = count;
+        }
+    }
+
+    global.minatoSessions[chatId] = { board, revealed, size, status: 'playing', lastMsg: null };
+
+    const render = () => {
+        let out = "🚩 *CAMPO MINATO 9x9* 🚩\n\n    1 2 3 4 5 6 7 8 9\n";
+        for (let r = 0; r < size; r++) {
+            out += `${r + 1} 🟦🟦🟦🟦🟦🟦🟦🟦🟦\n`;
+        }
+        out += "\nScrivi *Riga Spazio Colonna* (es: *3 5*)";
+        return out;
+    };
+
+    let msg = await conn.sendMessage(chatId, { 
+        image: { url: 'https://cdn-icons-png.flaticon.com/512/3505/3505500.png' },
+        caption: render() 
+    });
+    global.minatoSessions[chatId].lastMsg = msg.key.id;
+};
+
+handler.command = /^(minato|mines)$/i;
+export default handler;
