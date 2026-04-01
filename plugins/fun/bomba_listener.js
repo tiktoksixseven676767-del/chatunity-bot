@@ -8,28 +8,30 @@ handler.before = async function (m, { conn }) {
     const session = global.bombaSessions[chatId];
 
     if (!session || session.status !== 'attiva') return;
-    if (session.possessore !== senderId) return; // Solo chi ha la bomba può rispondere
+    
+    // Solo il possessore attuale può "disinnescare" e passare la bomba
+    if (session.possessore !== senderId) return;
 
     let risposta = m.text ? m.text.trim().toUpperCase() : "";
     
-    // Controllo validità: inizia con la lettera corretta e ha almeno 3 lettere
     if (risposta.startsWith(session.lettera) && risposta.length >= 3) {
-        // Scegli una nuova vittima a caso tra chi è nel gruppo (o chi ha partecipato)
-        // Per semplicità qui la bomba viene "lanciata" a chi risponde dopo o rimane libera
-        
+        // Cambia lettera e libera la bomba per il prossimo
         session.lettera = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'L', 'M', 'N', 'P', 'R', 'S', 'T', 'V'][Math.floor(Math.random() * 15)];
-        session.possessore = ""; // Diventa libera per il prossimo che sbaglia o chi la prende
+        session.possessore = null; // Ora la bomba è "libera", il primo che scrive la prende e la lancia
         
-        let msg = await conn.sendMessage(chatId, {
-            text: `✅ Parola corretta! La bomba è stata lanciata lontano!\n\n🔥 Ora la bomba è LIBERA. Il primo che scrive una parola con *${session.lettera}* la passa a qualcun altro!`
+        await conn.sendMessage(chatId, {
+            text: `✅ *SALVO!* @${senderId.split('@')[0]} ha lanciato la bomba!\n\n🔥 La bomba ora è LIBERA!\nIl primo che scrive una parola con *${session.lettera}* la prende e la lancia a qualcun altro!`,
+            mentions: [senderId]
         });
-        
-        // Aggiorniamo la logica: il primo che scrive una parola la "molla" a un altro
-        // In questa versione semplificata, chi risponde correttamente si salva e la bomba aspetta la prossima vittima
-        session.possessore = null; 
-    } else if (risposta.length > 0 && session.possessore === senderId) {
-        // Se scrive ma sbaglia la lettera
-        // m.reply(`❌ La parola deve iniziare con ${session.lettera}!`);
+    }
+
+    // Se la bomba è libera e qualcuno scrive una parola corretta, diventa lui il possessore
+    if (!session.possessore && risposta.startsWith(session.lettera) && risposta.length >= 3) {
+        session.possessore = senderId;
+        await conn.sendMessage(chatId, {
+            text: `🏃‍♂️ @${senderId.split('@')[0]} ha preso la bomba! \nSbrigati a scrivere un'altra parola con *${session.lettera}* per passarla!`,
+            mentions: [senderId]
+        });
     }
 
     return;
