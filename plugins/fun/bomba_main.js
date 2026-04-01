@@ -18,23 +18,24 @@ let handler = async (m, { conn, usedPrefix, command }) => {
         lastMsg: null
     };
 
-    // URL GIF Alternativo (più stabile per i bot)
+    // Immagine statica bomba (quella che hai inviato)
     let msg = await conn.sendMessage(chatId, {
-        video: { url: 'https://qu.ax/ZloG.mp4' }, 
-        gifPlayback: true,
-        caption: `💣 *PASSA LA BOMBA!* 💣\n\nLa bomba è in mano a @${senderId.split('@')[0]}\n\n✨ Sfida: Scrivi una parola che inizia con la lettera: *${letteraScelta}*\n\n⏳ Sbrigati! Hai pochissimi secondi!`,
+        image: { url: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTexd43eGKtfEcZLKXSl7C3dxma5khrl4A35k3ycAh5yQ&s=10' }, 
+        caption: `💣 *PASSA LA BOMBA!* 💣\n\nLa bomba è in mano a @${senderId.split('@')[0]}\n\n✨ Sfida: Scrivi una parola che inizia con la lettera: *${letteraScelta}*\n\n⏳ Sbrigati! La miccia brucia!`,
         mentions: [senderId]
     }, { quoted: m });
 
     global.bombaSessions[chatId].lastMsg = msg.key.id;
 
+    // Timer Esplosione
     setTimeout(async () => {
         if (global.bombaSessions[chatId]) {
             let finale = global.bombaSessions[chatId];
+            // GIF Esplosione Nucleare Tenor
             await conn.sendMessage(chatId, {
-                video: { url: 'https://qu.ax/SMap.mp4' }, 
+                video: { url: 'https://media.tenor.com/ehGe2R5USNcAAAAM/nuclear-bomb.gif' }, 
                 gifPlayback: true,
-                caption: `💥 *BOOOOM!* 💥\n\nLa bomba è esplosa in mano a @${finale.possessore.split('@')[0]}!\n💀 Sei stato eliminato!`,
+                caption: `💥 *BOOOOM!* 💥\n\nLa bomba è esplosa in mano a @${finale.possessore.split('@')[0]}!\n💀 Sei stato polverizzato!`,
                 mentions: [finale.possessore]
             });
             delete global.bombaSessions[chatId];
