@@ -3,20 +3,16 @@ let trisSessions = {};
 let handler = async (m, { conn, text, usedPrefix, command }) => {
     const chatId = m.chat;
     const senderId = m.sender;
-    const msgContent = m.body ? m.body.trim() : "";
 
-    // --- FUNZIONI INTERNE ---
-    const renderBoard = (board) => {
-        const emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
-        let res = "";
+    const renderBoard = (b) => {
+        const em = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
+        let out = "";
         for (let i = 0; i < 9; i++) {
-            if (board[i] === 'X') res += '❌';
-            else if (board[i] === 'O') res += '⭕';
-            else res += emojis[i];
-            if ((i + 1) % 3 === 0) res += "\n";
-            else res += "  "; 
+            out += b[i] ? (b[i] === 'X' ? '❌' : '⭕') : em[i];
+            if ((i + 1) % 3 === 0) out += "\n";
+            else out += "  ";
         }
-        return res;
+        return out;
     };
 
     const checkWinner = (b) => {
@@ -27,94 +23,99 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
         return b.includes(null) ? null : 'Pareggio';
     };
 
-    const setRoomTimeout = (roomId) => {
-        if (trisSessions[roomId]?.timeout) clearTimeout(trisSessions[roomId].timeout);
+    // --- COMANDO INIZIALE .tris ---
+    if (command === 'tris') {
+        if (!text) return m.reply(`Indica il nome della stanza!\nEsempio: *${usedPrefix + command} test*`);
+        let roomName = text.toLowerCase().trim();
+        let roomId = chatId + roomName;
+        if (trisSessions[roomId]) return m.reply('Stanza già occupata.');
+
+        trisSessions[roomId] = { name: roomName, board: Array(9).fill(null), p1: senderId, p2: null, turn: senderId, status: 'waiting' };
+        
+        // Timeout 5 minuti
         trisSessions[roomId].timeout = setTimeout(() => {
             if (trisSessions[roomId]) {
-                conn.sendMessage(chatId, { text: `⏰ La stanza *${trisSessions[roomId].name}* è stata chiusa.` });
+                conn.sendMessage(chatId, { text: `⏰ Stanza *${roomName}* chiusa per inattività.` });
                 delete trisSessions[roomId];
             }
         }, 5 * 60 * 1000);
-    };
 
-    // --- COMANDO .tris ---
-    if (command === 'tris') {
-        if (!text) return m.reply(`Indica il nome della stanza!\nEsempio: *${usedPrefix + command} ciao*`);
-        let roomName = text.toLowerCase().trim();
-        let roomId = chatId + roomName;
-        if (trisSessions[roomId]) return m.reply(`La stanza *${roomName}* esiste già.`);
-
-        trisSessions[roomId] = {
-            name: roomName,
-            board: Array(9).fill(null),
-            p1: senderId,
-            p2: null,
-            turn: senderId,
-            status: 'waiting'
-        };
-        setRoomTimeout(roomId);
-        return m.reply(`🎮 Stanza *${roomName}* creata!\n\nUsa *${usedPrefix}entratris ${roomName}*`);
+        return m.reply(`🎮 Stanza *${roomName}* creata!\nUsa *.entratris ${roomName}* per sfidarlo.`);
     }
 
-    // --- COMANDO .entratris ---
+    // --- ENTRATRIS ---
     if (command === 'entratris') {
         let roomName = text.toLowerCase().trim();
         let roomId = chatId + roomName;
-        if (!trisSessions[roomId]) return m.reply(`Stanza non trovata.`);
-        if (trisSessions[roomId].p1 === senderId) return m.reply(`Non puoi giocare contro te stesso.`);
+        let s = trisSessions[roomId];
+        if (!s) return m.reply('Stanza non trovata.');
+        if (s.p1 === senderId) return m.reply('Non puoi sfidare te stesso.');
 
-        trisSessions[roomId].p2 = senderId;
-        trisSessions[roomId].status = 'playing';
-        setRoomTimeout(roomId);
+        s.p2 = senderId;
+        s.status = 'playing';
 
-        return conn.sendMessage(chatId, { 
-            text: `🎮 Sfida Iniziata!\n❌ @${trisSessions[roomId].p1.split('@')[0]}\n⭕ @${senderId.split('@')[0]}\n\n${renderBoard(trisSessions[roomId].board)}\n\nTocca a @${trisSessions[roomId].p1.split('@')[0]}!`,
-            mentions: [trisSessions[roomId].p1, senderId]
+        // Genera i bottoni per la prima mossa
+        let buttons = [];
+        for (let i = 0; i < 9; i++) {
+            buttons.push({ buttonId: `${i + 1}`, buttonText: { displayText: `${i + 1}` }, type: 1 });
+        }
+
+        return conn.sendMessage(chatId, {
+            text: `🎮 Sfida Iniziata!\n❌ @${s.p1.split('@')[0]}\n⭕ @${senderId.split('@')[0]}\n\n${renderBoard(s.board)}\n\nTocca a @${s.p1.split('@')[0]}!`,
+            buttons: buttons,
+            footer: `Stanza: ${roomName}`,
+            mentions: [s.p1, senderId]
         });
     }
+};
 
-    // --- LOGICA MOSSE (SENZA PREFISSO) ---
-    // Cerchiamo una sessione dove l'utente è presente e la partita è 'playing'
-    let activeRoomId = Object.keys(trisSessions).find(id => 
-        id.startsWith(chatId) && 
-        (trisSessions[id].p1 === senderId || trisSessions[id].p2 === senderId) && 
-        trisSessions[id].status === 'playing'
+// --- LOGICA PULSANTI (Gestita in before) ---
+handler.before = async function (m, { conn }) {
+    const chatId = m.chat;
+    const senderId = m.sender;
+    const body = m.text || m.body || "";
+
+    if (!/^[1-9]$/.test(body)) return; // Se non è un numero 1-9, ignora
+
+    let room = Object.values(trisSessions).find(s => 
+        s.status === 'playing' && (s.p1 === senderId || s.p2 === senderId)
     );
 
-    if (activeRoomId && /^[1-9]$/.test(msgContent)) {
-        let session = trisSessions[activeRoomId];
-        if (session.turn !== senderId) return; // Non è il tuo turno, ignoro silenziosamente
+    if (!room) return;
+    if (room.turn !== senderId) return; // Ignora se non è il suo turno
 
-        let move = parseInt(msgContent) - 1;
-        if (session.board[move] !== null) return m.reply('Casella già occupata!');
+    let move = parseInt(body) - 1;
+    if (room.board[move]) return;
 
-        session.board[move] = (senderId === session.p1) ? 'X' : 'O';
-        let result = checkWinner(session.board);
+    room.board[move] = (senderId === room.p1) ? 'X' : 'O';
+    let win = checkWinner(room.board);
 
-        if (result) {
-            let finalMsg = renderBoard(session.board) + "\n\n";
-            finalMsg += result === 'Pareggio' ? "🤝 Pareggio!" : `🏆 Vince @${(result === 'X' ? session.p1 : session.p2).split('@')[0]}!`;
-            await conn.sendMessage(chatId, { text: finalMsg, mentions: [session.p1, session.p2] });
-            clearTimeout(session.timeout);
-            delete trisSessions[activeRoomId];
-        } else {
-            session.turn = (senderId === session.p1) ? session.p2 : session.p1;
-            setRoomTimeout(activeRoomId);
-            await conn.sendMessage(chatId, { 
-                text: `${renderBoard(session.board)}\nTocca a @${session.turn.split('@')[0]}`,
-                mentions: [session.turn]
-            });
-        }
+    if (win) {
+        let res = `${renderBoard(room.board)}\n\n` + (win === 'Pareggio' ? '🤝 Pareggio!' : `🏆 Vince @${(win === 'X' ? room.p1 : room.p2).split('@')[0]}!`);
+        await conn.sendMessage(chatId, { text: res, mentions: [room.p1, room.p2] });
+        clearTimeout(room.timeout);
+        delete trisSessions[chatId + room.name];
+    } else {
+        room.turn = (senderId === room.p1) ? room.p2 : room.p1;
+        
+        // Rigenera i bottoni con solo le caselle rimaste
+        let buttons = [];
+        room.board.forEach((val, i) => {
+            if (!val) buttons.push({ buttonId: `${i + 1}`, buttonText: { displayText: `${i + 1}` }, type: 1 });
+        });
+
+        await conn.sendMessage(chatId, { 
+            text: `${renderBoard(room.board)}\nTocca a @${room.turn.split('@')[0]}`,
+            buttons: buttons,
+            footer: `Stanza: ${room.name}`,
+            mentions: [room.turn]
+        });
     }
+    return true;
 };
 
 handler.help = ['tris', 'entratris'];
 handler.tags = ['games'];
 handler.command = /^(tris|entratris)$/i;
-// Questa riga è fondamentale: permette al plugin di leggere anche i messaggi senza il punto
-handler.all = async function (m) {
-    if (!m.body || !/^[1-9]$/.test(m.body)) return;
-    return handler.call(this, m, { conn: this, text: m.body, usedPrefix: '.', command: '' });
-};
 
 export default handler;
