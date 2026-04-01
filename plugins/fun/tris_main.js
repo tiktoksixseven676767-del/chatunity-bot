@@ -1,13 +1,11 @@
-// Usiamo un oggetto globale per condividere i dati tra i due file
 global.trisSessions = global.trisSessions || {};
 
 let handler = async (m, { conn, text, usedPrefix, command }) => {
     const chatId = m.chat;
     const senderId = m.sender;
 
-    // --- COMANDO .tris <nome> ---
     if (command === 'tris') {
-        if (!text) return m.reply(`crea un nome per la stanza!\nEsempio: *${usedPrefix}tris sfida1*`);
+        if (!text) return m.reply(`Indica un nome per la stanza!\nEsempio: *${usedPrefix}tris sfida1*`);
         let roomName = text.toLowerCase().trim();
         let roomId = chatId + roomName;
 
@@ -23,27 +21,31 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
             lastMsg: null
         };
 
-        // Auto-distruzione dopo 5 minuti
+        // Immagine statica per la creazione stanza
+        await conn.sendMessage(chatId, { 
+            image: { url: 'https://www.globo.it/wp-content/uploads/2018/12/Il-gioco-del-tris-1536x1025.jpg' },
+            caption: `🎮 Stanza *${roomName}* creata da @${senderId.split('@')[0]}!\n\nSfidante, scrivi: *.entratris ${roomName}*`,
+            mentions: [senderId]
+        }, { quoted: m });
+
         setTimeout(() => {
             if (global.trisSessions[roomId] && global.trisSessions[roomId].status === 'waiting') {
-                conn.sendMessage(chatId, { text: `⏰ Stanza *${roomName}* eliminata per inattività.` });
+                conn.sendMessage(chatId, { text: `⏰ Stanza *${roomName}* chiusa.` });
                 delete global.trisSessions[roomId];
             }
         }, 5 * 60 * 1000);
-
-        return m.reply(`🎮 Stanza *${roomName}* creata!\nSfidante, rispondi con: *.entratris ${roomName}*`);
+        return;
     }
 
-    // --- COMANDO .entratris <nome> ---
     if (command === 'entratris') {
         if (!text) return m.reply(`Specifica il nome della stanza.`);
         let roomName = text.toLowerCase().trim();
         let roomId = chatId + roomName;
         let s = global.trisSessions[roomId];
 
-        if (!s) return m.reply(`La stanza *${roomName}* non esiste.`);
+        if (!s) return m.reply(`Stanza non trovata.`);
         if (s.status === 'playing') return m.reply(`Partita già in corso.`);
-        if (s.p1 === senderId) return m.reply(`Non puoi sfidare te stesso.`);
+        if (s.p1 === senderId) return m.reply(`Non puoi giocare da solo.`);
 
         s.p2 = senderId;
         s.status = 'playing';
@@ -54,16 +56,16 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
             boardTxt += em[i] + ((i + 1) % 3 === 0 ? "\n" : "  ");
         }
 
+        // GIF per l'inizio partita e ogni mossa successiva
         let msg = await conn.sendMessage(chatId, { 
-            text: `🎮 Sfida Iniziata in *${roomName}*!\n❌ @${s.p1.split('@')[0]}\n⭕ @${senderId.split('@')[0]}\n\n${boardTxt}\n\nTocca a @${s.p1.split('@')[0]}!\n\n*(Rispondi a questo messaggio con un numero)*`,
+            video: { url: 'https://upload.wikimedia.org/wikipedia/commons/3/33/T3-517328496.gif' },
+            gifPlayback: true,
+            caption: `🎮 Partita Iniziata!\n❌ @${s.p1.split('@')[0]}\n⭕ @${senderId.split('@')[0]}\n\n${boardTxt}\n\nTocca a @${s.p1.split('@')[0]}!`,
             mentions: [s.p1, senderId]
         });
         s.lastMsg = msg.key.id;
     }
 };
 
-handler.help = ['tris', 'entratris'];
-handler.tags = ['games'];
 handler.command = /^(tris|entratris)$/i;
-
 export default handler;
