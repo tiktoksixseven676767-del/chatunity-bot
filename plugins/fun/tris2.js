@@ -1,16 +1,34 @@
 let trisSessions = {};
 
 let handler = async (m, { conn, text, usedPrefix, command }) => {
-    const chatId = m.chat; // ID della conversazione (gruppo o privato)
+    const chatId = m.chat;
     const senderId = m.sender;
 
-    // --- COMANDO PER CREARE O ENTRARE ---
+    // --- FUNZIONI INTERNE (Per evitare l'errore Illegal Return) ---
+    const renderBoard = (board) => {
+        let res = "";
+        for (let i = 0; i < 9; i++) {
+            res += board[i] ? (board[i] === 'X' ? '❌' : '⭕') : ` ${i + 1}️ `;
+            if ((i + 1) % 3 === 0) res += "\n";
+        }
+        return res;
+    };
+
+    const checkWinner = (b) => {
+        const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+        for (let [a, b_idx, c] of wins) {
+            if (b[a] && b[a] === b[b_idx] && b[a] === b[c]) return b[a];
+        }
+        return b.includes(null) ? null : 'Pareggio';
+    };
+
+    // --- COMANDO .tris <nome> ---
     if (command === 'tris') {
         if (!text) return m.reply(`Indica il nome della stanza! Esempio:\n*${usedPrefix + command} ciao*`);
         let roomName = text.toLowerCase().trim();
-        let roomId = chatId + roomName; // Stanza unica per quel gruppo
+        let roomId = chatId + roomName;
 
-        if (trisSessions[roomId]) return m.reply(`La stanza *${roomName}* esiste già. Usa *${usedPrefix}entratris ${roomName}*`);
+        if (trisSessions[roomId]) return m.reply(`La stanza *${roomName}* è già occupata.`);
 
         trisSessions[roomId] = {
             name: roomName,
@@ -20,92 +38,60 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
             turn: senderId,
             status: 'waiting'
         };
-        return m.reply(`🎮 Stanza *${roomName}* creata!\nIn attesa del secondo giocatore...\nDigita *${usedPrefix}entratris ${roomName}* per sfidare ${await conn.getName(senderId)}`);
+        return m.reply(`🎮 Stanza *${roomName}* creata!\n\nIn attesa di un avversario...\nDigita *${usedPrefix}entratris ${roomName}*`);
     }
 
+    // --- COMANDO .entratris <nome> ---
     if (command === 'entratris') {
-        if (!text) return m.reply(`Indica il nome della stanza in cui vuoi entrare!`);
+        if (!text) return m.reply(`Quale stanza? Esempio: *${usedPrefix}entratris ciao*`);
         let roomName = text.toLowerCase().trim();
         let roomId = chatId + roomName;
 
-        if (!trisSessions[roomId]) return m.reply(`La stanza *${roomName}* non esiste.`);
-        if (trisSessions[roomId].p2) return m.reply(`La stanza è già piena.`);
-        if (trisSessions[roomId].p1 === senderId) return m.reply(`Non puoi sfidare te stesso!`);
+        if (!trisSessions[roomId]) return m.reply(`Stanza non trovata.`);
+        if (trisSessions[roomId].status === 'playing') return m.reply(`Partita già in corso.`);
+        if (trisSessions[roomId].p1 === senderId) return m.reply(`Non puoi giocare contro te stesso!`);
 
         trisSessions[roomId].p2 = senderId;
         trisSessions[roomId].status = 'playing';
 
-        let boardTxt = renderBoard(trisSessions[roomId].board);
         return conn.sendMessage(chatId, { 
-            text: `🎮 Sfida Iniziata!\n*${await conn.getName(trisSessions[roomId].p1)}* (❌) vs *${await conn.getName(senderId)}* (⭕)\n\n${boardTxt}\n\nTocca a @${trisSessions[roomId].p1.split('@')[0]}!`,
-            mentions: [trisSessions[roomId].p1, trisSessions[roomId].p2]
+            text: `🎮 Partita Iniziata!\n❌ @${trisSessions[roomId].p1.split('@')[0]}\n⭕ @${senderId.split('@')[0]}\n\n${renderBoard(trisSessions[roomId].board)}\n\nTocca a @${trisSessions[roomId].p1.split('@')[0]}!`,
+            mentions: [trisSessions[roomId].p1, senderId]
         });
     }
 
-    // --- LOGICA DI GIOCO (solo se l'utente invia un numero) ---
-    // Cerchiamo se l'utente è in una partita attiva in questo gruppo
-    let activeRoomId = Object.keys(trisSessions).find(id => 
-        id.startsWith(chatId) && 
-        (trisSessions[id].p1 === senderId || trisSessions[id].p2 === senderId) && 
-        trisSessions[id].status === 'playing'
+    // --- GESTIONE MOSSE (Solo per i giocatori nella stanza) ---
+    let activeRoom = Object.values(trisSessions).find(s => 
+        (s.p1 === senderId || s.p2 === senderId) && s.status === 'playing'
     );
 
-    if (activeRoomId && /^[1-9]$/.test(text)) {
-        let session = trisSessions[activeRoomId];
-
-        // Controllo turno
-        if (session.turn !== senderId) return m.reply(`Non è il tuo turno! Aspetta @${session.turn.split('@')[0]}`, null, { mentions: [session.turn] });
+    if (activeRoom && /^[1-9]$/.test(text)) {
+        let roomId = chatId + activeRoom.name;
+        if (activeRoom.turn !== senderId) return; // Ignora se non è il suo turno
 
         let move = parseInt(text) - 1;
-        if (session.board[move] !== null) return m.reply('Casella già occupata!');
+        if (activeRoom.board[move] !== null) return m.reply('Casella occupata!');
 
-        // Assegna il segno
-        session.board[move] = (senderId === session.p1) ? 'X' : 'O';
-        
-        // Controllo vittoria
-        let winnerMark = checkWinner(session.board);
-        if (winnerMark) {
-            let msg = renderBoard(session.board) + "\n\n";
-            if (winnerMark === 'Pareggio') msg += "🤝 *Pareggio!*";
-            else {
-                let winnerId = (winnerMark === 'X') ? session.p1 : session.p2;
-                msg += `🏆 *IL VINCITORE È @${winnerId.split('@')[0]}!*`;
-            }
-            await conn.sendMessage(chatId, { text: msg, mentions: [session.p1, session.p2] });
-            delete trisSessions[activeRoomId];
-            return;
+        activeRoom.board[move] = (senderId === activeRoom.p1) ? 'X' : 'O';
+        let result = checkWinner(activeRoom.board);
+
+        if (result) {
+            let finalMsg = renderBoard(activeRoom.board) + "\n\n";
+            finalMsg += result === 'Pareggio' ? "🤝 Pareggio!" : `🏆 Vince @${(result === 'X' ? activeRoom.p1 : activeRoom.p2).split('@')[0]}!`;
+            await conn.sendMessage(chatId, { text: finalMsg, mentions: [activeRoom.p1, activeRoom.p2] });
+            delete trisSessions[roomId];
+        } else {
+            activeRoom.turn = (senderId === activeRoom.p1) ? activeRoom.p2 : activeRoom.p1;
+            await conn.sendMessage(chatId, { 
+                text: `${renderBoard(activeRoom.board)}\nTocca a @${activeRoom.turn.split('@')[0]}`,
+                mentions: [activeRoom.turn]
+            });
         }
-
-        // Cambio turno
-        session.turn = (senderId === session.p1) ? session.p2 : session.p1;
-        await conn.sendMessage(chatId, { 
-            text: `${renderBoard(session.board)}\nTocca a @${session.turn.split('@')[0]}`,
-            mentions: [session.turn]
-        });
     }
 };
 
-// Funzioni spostate all'interno per evitare l'errore "Illegal return" in alcuni ambienti
-function renderBoard(board) {
-    let text = "";
-    for (let i = 0; i < 9; i++) {
-        text += board[i] ? (board[i] === 'X' ? '❌' : '⭕') : ` ${i + 1}️ `;
-        if ((i + 1) % 3 === 0) text += "\n";
-    }
-    return text;
-}
-
-function checkWinner(b) {
-    const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-    for (let [a, b_idx, c] of wins) {
-        if (b[a] && b[a] === b[b_idx] && b[a] === b[c]) return b[a];
-    }
-    return b.includes(null) ? null : 'Pareggio';
-}
-
-handler.help = ['tris <nome>', 'entratris <nome>'];
+handler.help = ['tris', 'entratris'];
 handler.tags = ['games'];
 handler.command = /^(tris|entratris)$/i;
-handler.group = true; // Solo nei gruppi per il multiplayer
 
 export default handler;
