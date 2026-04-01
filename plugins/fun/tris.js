@@ -4,6 +4,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
     const chatId = m.chat;
     const senderId = m.sender;
 
+    // --- FUNZIONI INTERNE ---
     const renderBoard = (b) => {
         const em = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
         let out = "";
@@ -23,99 +24,86 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
         return b.includes(null) ? null : 'Pareggio';
     };
 
-    // --- COMANDO INIZIALE .tris ---
+    // --- COMANDO .tris ---
     if (command === 'tris') {
-        if (!text) return m.reply(`Indica il nome della stanza!\nEsempio: *${usedPrefix + command} test*`);
+        if (!text) return m.reply(`Indica un nome! Esempio: *${usedPrefix}tris ciao*`);
+        if (/^[1-9]$/.test(text)) return m.reply("❌ Il nome della stanza non può essere un numero singolo.");
+        
         let roomName = text.toLowerCase().trim();
         let roomId = chatId + roomName;
         if (trisSessions[roomId]) return m.reply('Stanza già occupata.');
 
         trisSessions[roomId] = { name: roomName, board: Array(9).fill(null), p1: senderId, p2: null, turn: senderId, status: 'waiting' };
         
-        // Timeout 5 minuti
-        trisSessions[roomId].timeout = setTimeout(() => {
-            if (trisSessions[roomId]) {
-                conn.sendMessage(chatId, { text: `⏰ Stanza *${roomName}* chiusa per inattività.` });
-                delete trisSessions[roomId];
-            }
-        }, 5 * 60 * 1000);
-
-        return m.reply(`🎮 Stanza *${roomName}* creata!\nUsa *.entratris ${roomName}* per sfidarlo.`);
+        return m.reply(`🎮 Stanza *${roomName}* creata!\nSfidante, scrivi: *.entratris ${roomName}*`);
     }
 
-    // --- ENTRATRIS ---
+    // --- COMANDO .entratris ---
     if (command === 'entratris') {
         let roomName = text.toLowerCase().trim();
         let roomId = chatId + roomName;
         let s = trisSessions[roomId];
         if (!s) return m.reply('Stanza non trovata.');
-        if (s.p1 === senderId) return m.reply('Non puoi sfidare te stesso.');
+        if (s.p1 === senderId) return m.reply('Non puoi giocare da solo.');
 
         s.p2 = senderId;
         s.status = 'playing';
 
-        // Genera i bottoni per la prima mossa
         let buttons = [];
-        for (let i = 0; i < 9; i++) {
-            buttons.push({ buttonId: `${i + 1}`, buttonText: { displayText: `${i + 1}` }, type: 1 });
+        for (let i = 1; i <= 9; i++) {
+            buttons.push({ index: i, quickReplyButton: { displayText: `${i}`, id: `${i}` } });
         }
 
         return conn.sendMessage(chatId, {
-            text: `🎮 Sfida Iniziata!\n❌ @${s.p1.split('@')[0]}\n⭕ @${senderId.split('@')[0]}\n\n${renderBoard(s.board)}\n\nTocca a @${s.p1.split('@')[0]}!`,
-            buttons: buttons,
+            text: `🎮 Partita Iniziata!\n❌ @${s.p1.split('@')[0]}\n⭕ @${senderId.split('@')[0]}\n\n${renderBoard(s.board)}\n\nTocca a @${s.p1.split('@')[0]}!`,
+            templateButtons: buttons,
             footer: `Stanza: ${roomName}`,
             mentions: [s.p1, senderId]
         });
     }
 };
 
-// --- LOGICA PULSANTI (Gestita in before) ---
 handler.before = async function (m, { conn }) {
     const chatId = m.chat;
     const senderId = m.sender;
-    const body = m.text || m.body || "";
+    const txt = (m.text || m.body || "").trim().replace(/\./g, ''); // Toglie il punto se presente
 
-    if (!/^[1-9]$/.test(body)) return; // Se non è un numero 1-9, ignora
+    if (!/^[1-9]$/.test(txt)) return;
 
-    let room = Object.values(trisSessions).find(s => 
-        s.status === 'playing' && (s.p1 === senderId || s.p2 === senderId)
+    let roomId = Object.keys(trisSessions).find(id => 
+        id.startsWith(chatId) && trisSessions[id].status === 'playing' && (trisSessions[id].p1 === senderId || trisSessions[id].p2 === senderId)
     );
 
-    if (!room) return;
-    if (room.turn !== senderId) return; // Ignora se non è il suo turno
+    if (!roomId) return;
+    let s = trisSessions[roomId];
+    if (s.turn !== senderId) return;
 
-    let move = parseInt(body) - 1;
-    if (room.board[move]) return;
+    let move = parseInt(txt) - 1;
+    if (s.board[move]) return m.reply('Occupata!');
 
-    room.board[move] = (senderId === room.p1) ? 'X' : 'O';
-    let win = checkWinner(room.board);
+    s.board[move] = (senderId === s.p1) ? 'X' : 'O';
+    let win = checkWinner(s.board);
 
     if (win) {
-        let res = `${renderBoard(room.board)}\n\n` + (win === 'Pareggio' ? '🤝 Pareggio!' : `🏆 Vince @${(win === 'X' ? room.p1 : room.p2).split('@')[0]}!`);
-        await conn.sendMessage(chatId, { text: res, mentions: [room.p1, room.p2] });
-        clearTimeout(room.timeout);
-        delete trisSessions[chatId + room.name];
+        let res = `${renderBoard(s.board)}\n\n` + (win === 'Pareggio' ? '🤝 Pareggio!' : `🏆 Vince @${(win === 'X' ? s.p1 : s.p2).split('@')[0]}!`);
+        await conn.sendMessage(chatId, { text: res, mentions: [s.p1, s.p2] });
+        delete trisSessions[roomId];
     } else {
-        room.turn = (senderId === room.p1) ? room.p2 : room.p1;
-        
-        // Rigenera i bottoni con solo le caselle rimaste
+        s.turn = (senderId === s.p1) ? s.p2 : s.p1;
         let buttons = [];
-        room.board.forEach((val, i) => {
-            if (!val) buttons.push({ buttonId: `${i + 1}`, buttonText: { displayText: `${i + 1}` }, type: 1 });
+        s.board.forEach((val, i) => {
+            if (!val) buttons.push({ index: i + 1, quickReplyButton: { displayText: `${i + 1}`, id: `${i + 1}` } });
         });
 
         await conn.sendMessage(chatId, { 
-            text: `${renderBoard(room.board)}\nTocca a @${room.turn.split('@')[0]}`,
-            buttons: buttons,
-            footer: `Stanza: ${room.name}`,
-            mentions: [room.turn]
+            text: `${renderBoard(s.board)}\nTocca a @${s.turn.split('@')[0]}`,
+            templateButtons: buttons,
+            footer: `Stanza: ${s.name}`,
+            mentions: [s.turn]
         });
     }
     return true;
 };
 
-handler.help = ['tris', 'entratris'];
-handler.tags = ['games'];
 handler.command = /^(tris|entratris)$/i;
-
 export default handler;
