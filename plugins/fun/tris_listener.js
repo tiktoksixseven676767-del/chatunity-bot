@@ -10,7 +10,6 @@ handler.before = async function (m, { conn }) {
     const senderId = m.sender;
     const move = parseInt(m.text.trim()) - 1;
 
-    // Cerca la stanza tramite l'ID del messaggio citato
     let roomId = Object.keys(global.trisSessions).find(id => 
         id.startsWith(chatId) && global.trisSessions[id].lastMsg === m.quoted.id
     );
@@ -21,10 +20,8 @@ handler.before = async function (m, { conn }) {
     if (s.status !== 'playing' || s.turn !== senderId) return;
     if (s.board[move]) return m.reply('Casella occupata!');
 
-    // Esegui mossa
     s.board[move] = (senderId === s.p1) ? 'X' : 'O';
 
-    // Funzioni di rendering
     const render = (b) => {
         const em = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
         let out = "";
@@ -46,12 +43,20 @@ handler.before = async function (m, { conn }) {
     let result = check(s.board);
     if (result) {
         let finalStr = `${render(s.board)}\n\n` + (result === 'Pareggio' ? "🤝 Pareggio!" : `🏆 @${(result === 'X' ? s.p1 : s.p2).split('@')[0]} vince!`);
-        await conn.sendMessage(chatId, { text: finalStr, mentions: [s.p1, s.p2] });
+        // Per il messaggio finale usiamo l'immagine statica
+        await conn.sendMessage(chatId, { 
+            image: { url: 'https://www.globo.it/wp-content/uploads/2018/12/Il-gioco-del-tris-1536x1025.jpg' },
+            caption: finalStr, 
+            mentions: [s.p1, s.p2] 
+        });
         delete global.trisSessions[roomId];
     } else {
         s.turn = (senderId === s.p1) ? s.p2 : s.p1;
+        // GIF durante lo svolgimento della partita
         let newMsg = await conn.sendMessage(chatId, { 
-            text: `🎮 Stanza: *${s.name}*\n${render(s.board)}\nTocca a @${s.turn.split('@')[0]}`,
+            video: { url: 'https://upload.wikimedia.org/wikipedia/commons/3/33/T3-517328496.gif' },
+            gifPlayback: true,
+            caption: `🎮 Stanza: *${s.name}*\n\n${render(s.board)}\n\nTocca a @${s.turn.split('@')[0]}`,
             mentions: [s.turn]
         }, { quoted: m });
         s.lastMsg = newMsg.key.id;
