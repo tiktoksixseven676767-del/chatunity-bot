@@ -44,7 +44,6 @@ handler.before = async function (m, { conn }) {
     if (result) {
         let finalStr = `${render(s.board)}\n\n` + (result === 'Pareggio' ? "🤝 Pareggio!" : `🏆 @${(result === 'X' ? s.p1 : s.p2).split('@')[0]} vince!`);
         
-        // Immagine Globo per la vittoria
         await conn.sendMessage(chatId, { 
             image: { url: 'https://www.globo.it/wp-content/uploads/2018/12/Il-gioco-del-tris-1536x1025.jpg' },
             caption: finalStr, 
@@ -54,9 +53,9 @@ handler.before = async function (m, { conn }) {
     } else {
         s.turn = (senderId === s.p1) ? s.p2 : s.p1;
         
-        // GIF Animata per ogni turno
+        // NUOVA GIF PINTEREST per ogni turno
         let newMsg = await conn.sendMessage(chatId, { 
-            video: { url: 'https://upload.wikimedia.org/wikipedia/commons/7/7d/Tic-tac-toe-animated.gif' },
+            video: { url: 'https://i.pinimg.com/originals/2f/52/13/2f5213443520758b6ad5667681e80d3f.gif' },
             gifPlayback: true,
             caption: `🎮 Stanza: *${s.name}*\n\n${render(s.board)}\n\nTocca a @${s.turn.split('@')[0]}`,
             mentions: [s.turn]
