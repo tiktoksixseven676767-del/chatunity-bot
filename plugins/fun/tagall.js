@@ -11,7 +11,7 @@ let handler = async (m, { isOwner, isAdmin, conn, text, participants, args, used
     if (!canTagFree) {
         // Se non è admin, controlla se ha abbastanza soldi
         if ((user.limit || 0) < cost) {
-            return m.reply(`🚫 Non sei un Admin! Per usare questo comando devi pagare *${cost.toLocaleString()} UC*.\n\nIl tuo saldo attuale è: *${(user.limit || 0).toLocaleString()} UC*`);
+            return m.reply(`🚫 Per usare questo comando devi pagare *${cost.toLocaleString()} UC*.\n\nIl tuo saldo attuale è: *${(user.limit || 0).toLocaleString()} UC*`);
         }
         
         // Sottrae i soldi
