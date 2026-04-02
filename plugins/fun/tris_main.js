@@ -56,11 +56,36 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
             boardTxt += em[i] + ((i + 1) % 3 === 0 ? "\n" : "  ");
         }
 
-       
-let msg = await conn.sendMessage(chatId, { 
-    image: { url: 'https://static.vecteezy.com/ti/vettori-gratis/p1/6409900-tic-tac-toe-sketched-isolato-gioco-vintage-in-stile-disegnato-a-mano-vettoriale.jpg' },
-    caption: `❌ *TRIS / TIC-TAC-TOE* ⭕\n\n@${m.sender.split('@')[0]} ha sfidato il gruppo!\n\nPer giocare, rispondi con il numero della casella (1-9).\n\n1 | 2 | 3\n----------\n4 | 5 | 6\n----------\n7 | 8 | 9`,
-    mentions: [m.sender]
-}, { quoted: m });
-// ------------------------------------------------
+       // --- PEZZO DA SOSTITUIRE (INIZIO PARTITA TRIS) ---
+    const board = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    global.tris[chatId] = {
+        board,
+        turn: m.sender, // Inizia chi lancia il comando
+        status: 'playing',
+        lastMsg: null
+    };
+
+    const renderBoard = (b) => {
+        return `🎮 *TRIS / TIC-TAC-TOE* 🎮\n\n` +
+               `  ${b[0]} | ${b[1]} | ${b[2]}\n` +
+               `  ----------\n` +
+               `  ${b[3]} | ${b[4]} | ${b[5]}\n` +
+               `  ----------\n` +
+               `  ${b[6]} | ${b[7]} | ${b[8]}\n\n` +
+               `Tocca a: @${m.sender.split('@')[0]}\n` +
+               `Rispondi con un numero (1-9) per segnare la tua mossa!`;
+    };
+
+    let msg = await conn.sendMessage(chatId, { 
+        image: { url: 'https://static.vecteezy.com/ti/vettori-gratis/p1/6409900-tic-tac-toe-sketched-isolato-gioco-vintage-in-stile-disegnato-a-mano-vettoriale.jpg' },
+        caption: renderBoard(board),
+        mentions: [m.sender]
+    }, { quoted: m });
+
+    global.tris[chatId].lastMsg = msg.key.id;
+};
+
+handler.command = /^(tris|tictactoe|ttt)$/i;
+export default handler;
+
 
