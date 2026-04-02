@@ -48,7 +48,7 @@ let handler = async (m, { conn, text, isOwner, usedPrefix, command }) => {
 
 handler.help = ['spawnauc <quantità>'];
 handler.tags = ['owner'];
-handler.command = /^(spawnauc|addlimit|moneyglitch)$/i;
+handler.command = /^(spawnauc|addlimit|moneyglitch|spawnuc)$/i;
 handler.owner = true; // Ulteriore protezione a livello di handler
 
 export default handler;
