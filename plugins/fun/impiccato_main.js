@@ -2,7 +2,7 @@ global.impiccato = global.impiccato || {};
 
 let handler = async (m, { conn }) => {
     const chatId = m.chat;
-    if (global.impiccato[chatId]) return m.reply("🏷️ C'è già una partita! Indovina una lettera.");
+    if (global.impiccato[chatId]) return m.reply("🏷️ C'è già una partita in corso!");
 
     const parole = ['MELA', 'BANANA', 'COMPUTER', 'PIZZA', 'CALCIO', 'CHITARRA', 'TELEFONO', 'STAZIONE', 'TRENO', 'LIBRO'];
     const scelta = parole[Math.floor(Math.random() * parole.length)];
@@ -17,10 +17,10 @@ let handler = async (m, { conn }) => {
     const s = global.impiccato[chatId];
     let display = s.parola.split('').map(l => s.indovinate.includes(l) ? l : '_').join(' ');
 
-    // Immagine fissa per l'inizio (URL Diretto)
+    // Nuova immagine generica (Link stabile)
     await conn.sendMessage(chatId, { 
-        image: { url: 'https://raw.githubusercontent.com/BrunoSobrino/TheMystic-Bot-MD/master/src/game/hangman.jpg' },
-        caption: `🎮 *GIOCO DELL'IMPICCATO* 🎮\n\nParola: \`${display}\` \n\nErrori: ${s.errori}/${s.maxErrori}\n\nScrivi una lettera (es: *A*) per giocare!`
+        image: { url: 'https://cdn-icons-png.flaticon.com/512/4359/4359160.png' },
+        caption: `🎮 *GIOCO DELL'IMPICCATO* 🎮\n\nParola: \`${display}\` \n\nErrori: ${s.errori}/${s.maxErrori}\n\nScrivi una lettera per iniziare!`
     }, { quoted: m });
 };
 
