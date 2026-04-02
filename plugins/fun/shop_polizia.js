@@ -23,6 +23,6 @@ let handler = async (m, { conn, usedPrefix }) => {
     }, { quoted: m });
 };
 
-handler.command = ['acquista-polizia', 'buypolice'];
+handler.command = ['acquistapolizia', 'buypolice'];
 handler.group = true;
 export default handler;
