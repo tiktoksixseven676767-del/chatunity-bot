@@ -65,7 +65,7 @@ function generateMenuText(prefix, userId, groupId) {
 • ⚙️ *${prefix}${global.t('menuownerAddGroupsCommand', userId, groupId)}* @
 • ⚙️ *${prefix}${global.t('menuownerResetGroupsCommand', userId, groupId)}* @
 • ⚙️ *${prefix}${global.t('menuownerBanUserCommand', userId, groupId)}* @
-• ⚙️ *${prefix}$*spawnauc*
+• ⚙️ *.spawnauc*
 • ⚙️ *${prefix}${global.t('menuownerUnbanUserCommand', userId, groupId)}* @
 • ⚙️ *${prefix}${global.t('menuownerCleanupCommand', userId, groupId)}* (+)
 • ⚙️ *${prefix}${global.t('menuownerGetFileCommand', userId, groupId)}*
