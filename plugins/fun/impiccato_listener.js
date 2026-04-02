@@ -5,41 +5,42 @@ let handler = m => m;
 handler.before = async function (m, { conn }) {
     const chatId = m.chat;
     const s = global.impiccato[chatId];
+    
+    // Filtro: deve esserci una sessione e il messaggio deve essere di una sola lettera
     if (!s || !m.text || m.text.length !== 1) return;
-
+    
     let lettera = m.text.toUpperCase();
     if (!/[A-Z]/.test(lettera)) return;
 
-    if (s.indovinate.includes(lettera)) return; // Già provata
+    if (s.indovinate.includes(lettera)) return; 
     s.indovinate.push(lettera);
 
     if (!s.parola.includes(lettera)) {
         s.errori++;
     }
 
-    const render = () => {
-        let display = s.parola.split('').map(l => s.indovinate.includes(l) ? l : '_').join(' ');
-        return `🎮 *IMPICCATO* 🎮\n\nParola: \`${display}\` \n\nLettere provate: ${s.indovinate.join(', ')}\nErrori: ${s.errori}/${s.maxErrori}`;
-    };
+    let display = s.parola.split('').map(l => s.indovinate.includes(l) ? l : '_').join(' ');
 
-    // Controllo Vittoria
+    // VITTORIA
     if (s.parola.split('').every(l => s.indovinate.includes(l))) {
-        await conn.sendMessage(chatId, { text: `🏆 *VINTO!* La parola era: *${s.parola}*` }, { quoted: m });
+        await conn.sendMessage(chatId, { text: `🏆 *VINTO!* Complimenti!\nLa parola era: *${s.parola}*` }, { quoted: m });
         delete global.impiccato[chatId];
+        return true;
     } 
-    // Controllo Sconfitta
-    else if (s.errori >= s.maxErrori) {
+
+    // SCONFITTA (Esplosione)
+    if (s.errori >= s.maxErrori) {
         await conn.sendMessage(chatId, { 
-            video: { url: 'https://media.tenor.com/ehGe2R5USNcAAAAM/nuclear-bomb.gif' },
+            video: { url: 'https://raw.githubusercontent.com/BrunoSobrino/TheMystic-Bot-MD/master/src/game/explocion.mp4' },
             gifPlayback: true,
-            caption: `💀 *PERSO!* Sei stato impiccato.\nLa parola era: *${s.parola}*`
+            caption: `💀 *PERSO!* Sei stato polverizzato.\nLa parola era: *${s.parola}*`
         }, { quoted: m });
         delete global.impiccato[chatId];
+        return true;
     } 
-    // Continua a giocare
-    else {
-        await conn.sendMessage(chatId, { text: render() }, { quoted: m });
-    }
+
+    // AGGIORNAMENTO STATO
+    await m.reply(`🎮 *IMPICCATO*\n\nParola: \`${display}\` \n\nLettere: ${s.indovinate.join(', ')}\nErrori: ${s.errori}/${s.maxErrori}`);
     return true;
 };
 
