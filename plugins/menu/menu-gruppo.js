@@ -77,7 +77,7 @@ function generateMenuText(prefix, userId, groupId) {
         // --- SEZIONE MODIFICATA ---
         createSection("POKEMON", `
 🥚 *.apripokemon*
-🛒 *.buypokemon* 🛒 *.acquista tagall* (100k UC)
+🛒 *.buypokemon*
 🏆 *.classificapokemon*
 🎁 *.pacchetti*
 ⚔️ *.combatti*
