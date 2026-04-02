@@ -19,7 +19,7 @@ let handler = async (m, { conn }) => {
 
     // Nuova immagine generica (Link stabile)
     await conn.sendMessage(chatId, { 
-        image: { url: 'https://cdn-icons-png.flaticon.com/512/4359/4359160.png' },
+        image: { url: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTg_qNpM5Swv2TfF2j8jAkFKvFRRWLMjETdTeS0SZxp3g&s=10' },
         caption: `🎮 *GIOCO DELL'IMPICCATO* 🎮\n\nParola: \`${display}\` \n\nErrori: ${s.errori}/${s.maxErrori}\n\nScrivi una lettera per iniziare!`
     }, { quoted: m });
 };
