@@ -27,17 +27,23 @@ handler.before = async function (m, { conn }) {
         delete global.impiccato[chatId];
         return true;
     } 
-
-    // SCONFITTA (Esplosione)
-    if (s.errori >= s.maxErrori) {
+// 💀 SCONFITTA (Con immagine Game Over)
+if (s.errori >= s.maxErrori) {
+    let textLost = `💀 *GAME OVER* 💀\n\nSei stato eliminato! La parola era: *${s.parola}*`;
+    
+    try {
         await conn.sendMessage(chatId, { 
-            video: { url: 'https://neonflexmood.com/cdn/shop/files/Game_Over7_600x.png?v=1712936328' },
-            gifPlayback: true,
-            caption: `💀 *PERSO!* Sei stato polverizzato.\nLa parola era: *${s.parola}*`
+            image: { url: 'https://neonflexmood.com/cdn/shop/files/Game_Over7_600x.png?v=1712936328' },
+            caption: textLost
         }, { quoted: m });
+    } catch (e) {
+        await conn.sendMessage(chatId, { text: textLost }, { quoted: m });
+    } finally {
         delete global.impiccato[chatId];
-        return true;
-    } 
+    }
+    return true;
+}
+
 
     // AGGIORNAMENTO STATO
     await m.reply(`🎮 *IMPICCATO*\n\nParola: \`${display}\` \n\nLettere: ${s.indovinate.join(', ')}\nErrori: ${s.errori}/${s.maxErrori}`);
