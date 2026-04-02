@@ -75,7 +75,7 @@ function generateMenuText(prefix, userId, groupId) {
 🎯 *.wanted*
 🚔 *.carcere*`),
         // --- SEZIONE MODIFICATA ---
-        createSection("POKEMON E ACQUISTABILI", `
+        createSection("POKEMON", `
 🥚 *.apripokemon*
 🛒 *.buypokemon* 🛒 *.acquista tagall* (100k UC)
 🏆 *.classificapokemon*
