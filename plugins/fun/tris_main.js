@@ -56,16 +56,11 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
             boardTxt += em[i] + ((i + 1) % 3 === 0 ? "\n" : "  ");
         }
 
-        // NUOVA GIF PINTEREST
-        let msg = await conn.sendMessage(chatId, { 
-            video: { url: 'https://i.pinimg.com/originals/2f/52/13/2f5213443520758b6ad5667681e80d3f.gif' },
-            gifPlayback: true,
-            caption: `🎮 Sfida Iniziata in *${roomName}*!\n❌ @${s.p1.split('@')[0]}\n⭕ @${senderId.split('@')[0]}\n\n${boardTxt}\n\nTocca a @${s.p1.split('@')[0]}!`,
-            mentions: [s.p1, senderId]
-        });
-        s.lastMsg = msg.key.id;
-    }
-};
+       
+let msg = await conn.sendMessage(chatId, { 
+    image: { url: 'https://static.vecteezy.com/ti/vettori-gratis/p1/6409900-tic-tac-toe-sketched-isolato-gioco-vintage-in-stile-disegnato-a-mano-vettoriale.jpg' },
+    caption: `❌ *TRIS / TIC-TAC-TOE* ⭕\n\n@${m.sender.split('@')[0]} ha sfidato il gruppo!\n\nPer giocare, rispondi con il numero della casella (1-9).\n\n1 | 2 | 3\n----------\n4 | 5 | 6\n----------\n7 | 8 | 9`,
+    mentions: [m.sender]
+}, { quoted: m });
+// ------------------------------------------------
 
-handler.command = /^(tris|entratris)$/i;
-export default handler;
