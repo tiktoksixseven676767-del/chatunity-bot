@@ -9,9 +9,8 @@ const handler = async (message, { conn, usedPrefix, command }) => {
     const groupId = message.isGroup ? message.chat : null;
 
     const menuText = generateMenuText(usedPrefix, userId, groupId);
-    // Assicurati che il percorso dell'immagine sia corretto rispetto alla cartella del plugin
     const imagePath = path.join(__dirname, '../../media/gruppo.jpeg');
-    
+
     const footerText = global.t('chooseMenu', userId, groupId) || 'Scegli un menu:';
     const mainMenuText = global.t('mainMenuButton', userId, groupId) || '🏠 Menu Principale';
     const adminMenuText = global.t('menuAdmin', userId, groupId) || '🛡️ Menu Admin';
@@ -74,8 +73,7 @@ function generateMenuText(prefix, userId, groupId) {
 🧠 *.stupido/a*
 🎯 *.wanted*
 🚔 *.carcere*`),
-        // --- SEZIONE MODIFICATA ---
-        createSection("POKEMON", `
+        createSection("🐾 POKEMON", `
 🥚 *.apripokemon*
 🛒 *.buypokemon*
 🏆 *.classificapokemon*
@@ -84,7 +82,10 @@ function generateMenuText(prefix, userId, groupId) {
 🔄 *.evolvi*
 🎒 *.inventario*
 🔄 *.scambia*`),
-        // ---------------------------
+        // --- NUOVA SEZIONE ACQUISTABILI ---
+        createSection("🛒 ACQUISTABILI", `
+📢 *.tagall* (100k UC)`),
+        // ----------------------------------
         createSection(global.t('gamesCasinoSection', userId, groupId), `
 🎮 *.tris*
 🎰 *.slot*
