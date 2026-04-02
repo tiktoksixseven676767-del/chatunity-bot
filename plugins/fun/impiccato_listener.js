@@ -20,13 +20,25 @@ handler.before = async function (m, { conn }) {
     }
 
     let display = s.parola.split('').map(l => s.indovinate.includes(l) ? l : '_').join(' ');
-
-    // VITTORIA
-    if (s.parola.split('').every(l => s.indovinate.includes(l))) {
-        await conn.sendMessage(chatId, { text: `🏆 *VINTO!* Complimenti!\nLa parola era: *${s.parola}*` }, { quoted: m });
+// 🏆 VITTORIA
+if (s.parola.split('').every(l => s.indovinate.includes(l))) {
+    let textWin = `🏆 *VINTO!* Complimenti!\nLa parola era: *${s.parola}*`;
+    
+    try {
+        await conn.sendMessage(chatId, { 
+            image: { url: 'https://media.tenor.com/JiPYLfR7lkIAAAAe/you-won-youwin.png' },
+            caption: textWin
+        }, { quoted: m });
+    } catch (e) {
+        // Fallback se l'immagine non carica
+        await conn.sendMessage(chatId, { text: textWin }, { quoted: m });
+    } finally {
+        // Reset sessione fondamentale
         delete global.impiccato[chatId];
-        return true;
-    } 
+    }
+    return true;
+}
+
 // 💀 SCONFITTA (Con immagine Game Over)
 if (s.errori >= s.maxErrori) {
     let textLost = `💀 *GAME OVER* 💀\n\nSei stato eliminato! La parola era: *${s.parola}*`;
