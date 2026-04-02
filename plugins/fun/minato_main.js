@@ -37,7 +37,7 @@ let handler = async (m, { conn, usedPrefix, command }) => {
     const render = () => {
         // Spaziatura migliorata per l'intestazione
         let out = "🚩 *CAMPO MINATO 9x9* 🚩\n\n";
-        out += "🆓1️⃣2️⃣3️⃣4️⃣5️⃣6️⃣7️⃣8️⃣9️⃣\n"; 
+        out += "0 1️⃣2️⃣3️⃣4️⃣5️⃣6️⃣7️⃣8️⃣9️⃣\n"; 
         for (let r = 0; r < size; r++) {
             out += `${r + 1}  🟦🟦🟦🟦🟦🟦🟦🟦🟦\n`;
         }
