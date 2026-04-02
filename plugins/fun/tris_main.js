@@ -21,7 +21,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
             lastMsg: null
         };
 
-        // 🖼️ Immagine GLOBO (Creazione stanza)
+        // --- INVITO (IMMAGINE GLOBO) ---
         await conn.sendMessage(chatId, { 
             image: { url: 'https://www.globo.it/wp-content/uploads/2018/12/Il-gioco-del-tris-1536x1025.jpg' },
             caption: `🎮 Stanza *${roomName}* creata da @${senderId.split('@')[0]}!\n\nSfidante, scrivi: *.entratris ${roomName}*`,
@@ -56,7 +56,8 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
             boardTxt += em[i] + ((i + 1) % 3 === 0 ? "\n" : "  ");
         }
 
-        // 📝 Immagine VECTEEZY (Al posto della GIF per l'inizio sfida)
+        // --- INIZIO SFIDA (IMMAGINE VECTEEZY) ---
+        // Ho rimosso completamente ogni riferimento a "video" o "gif" per evitare il doppio invio
         let msg = await conn.sendMessage(chatId, { 
             image: { url: 'https://static.vecteezy.com/ti/vettori-gratis/p1/6409900-tic-tac-toe-sketched-isolato-gioco-vintage-in-stile-disegnato-a-mano-vettoriale.jpg' },
             caption: `🎮 Sfida Iniziata in *${roomName}*!\n❌ @${s.p1.split('@')[0]}\n⭕ @${senderId.split('@')[0]}\n\n${boardTxt}\n\nTocca a @${s.p1.split('@')[0]}!\n\n*(Rispondi con un numero)*`,
@@ -64,6 +65,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
         }, { quoted: m });
         
         s.lastMsg = msg.key.id;
+        return; // Importante per fermare l'esecuzione qui
     }
 };
 
