@@ -1,91 +1,58 @@
-global.trisSessions = global.trisSessions || {};
+// Inizializza l'oggetto globale se non esiste
+global.tris = global.tris || {};
 
-let handler = async (m, { conn, text, usedPrefix, command }) => {
+let handler = async (m, { conn, usedPrefix, command }) => {
     const chatId = m.chat;
-    const senderId = m.sender;
 
-    if (command === 'tris') {
-        if (!text) return m.reply(`Indica un nome per la stanza!\nEsempio: *${usedPrefix}tris sfida1*`);
-        let roomName = text.toLowerCase().trim();
-        let roomId = chatId + roomName;
-
-        if (global.trisSessions[roomId]) return m.reply(`La stanza *${roomName}* è già attiva.`);
-
-        global.trisSessions[roomId] = {
-            name: roomName,
-            board: Array(9).fill(null),
-            p1: senderId,
-            p2: null,
-            turn: senderId,
-            status: 'waiting',
-            lastMsg: null
-        };
-
-        // Immagine Globo per creazione stanza
-        await conn.sendMessage(chatId, { 
-            image: { url: 'https://www.globo.it/wp-content/uploads/2018/12/Il-gioco-del-tris-1536x1025.jpg' },
-            caption: `🎮 Stanza *${roomName}* creata da @${senderId.split('@')[0]}!\n\nSfidante, scrivi: *.entratris ${roomName}*`,
-            mentions: [senderId]
-        }, { quoted: m });
-
-        setTimeout(() => {
-            if (global.trisSessions[roomId] && global.trisSessions[roomId].status === 'waiting') {
-                conn.sendMessage(chatId, { text: `⏰ Stanza *${roomName}* chiusa.` });
-                delete global.trisSessions[roomId];
-            }
-        }, 5 * 60 * 1000);
-        return;
+    // Controllo se c'è già una partita attiva nel gruppo
+    if (global.tris[chatId]) {
+        return m.reply(`⚠️ C'è già una sfida in corso! Finiscila prima di iniziarne un'altra.`);
     }
 
-    if (command === 'entratris') {
-        if (!text) return m.reply(`Specifica il nome della stanza.`);
-        let roomName = text.toLowerCase().trim();
-        let roomId = chatId + roomName;
-        let s = global.trisSessions[roomId];
-
-        if (!s) return m.reply(`Stanza non trovata.`);
-        if (s.status === 'playing') return m.reply(`Partita già in corso.`);
-        if (s.p1 === senderId) return m.reply(`Non puoi giocare da solo.`);
-
-        s.p2 = senderId;
-        s.status = 'playing';
-
-        const em = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
-        let boardTxt = "";
-        for (let i = 0; i < 9; i++) {
-            boardTxt += em[i] + ((i + 1) % 3 === 0 ? "\n" : "  ");
-        }
-
-       // --- PEZZO DA SOSTITUIRE (INIZIO PARTITA TRIS) ---
+    // Configurazione iniziale della scacchiera (1-9)
     const board = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    
+    // Creazione della sessione di gioco
     global.tris[chatId] = {
         board,
-        turn: m.sender, // Inizia chi lancia il comando
+        turn: m.sender, // Il primo turno è di chi lancia il comando
         status: 'playing',
+        winner: null,
         lastMsg: null
     };
 
+    // Funzione interna per renderizzare la griglia testuale sotto l'immagine
     const renderBoard = (b) => {
-        return `🎮 *TRIS / TIC-TAC-TOE* 🎮\n\n` +
+        return `❌ *SFIDA A TRIS* ⭕\n\n` +
                `  ${b[0]} | ${b[1]} | ${b[2]}\n` +
                `  ----------\n` +
                `  ${b[3]} | ${b[4]} | ${b[5]}\n` +
                `  ----------\n` +
                `  ${b[6]} | ${b[7]} | ${b[8]}\n\n` +
-               `Tocca a: @${m.sender.split('@')[0]}\n` +
-               `Rispondi con un numero (1-9) per segnare la tua mossa!`;
+               `👤 *Sfidante:* @${m.sender.split('@')[0]}\n` +
+               `👉 *Tocca a te!* Rispondi al messaggio con un numero da *1* a *9* per segnare la tua mossa.`;
     };
 
-    let msg = await conn.sendMessage(chatId, { 
-        image: { url: 'https://static.vecteezy.com/ti/vettori-gratis/p1/6409900-tic-tac-toe-sketched-isolato-gioco-vintage-in-stile-disegnato-a-mano-vettoriale.jpg' },
-        caption: renderBoard(board),
-        mentions: [m.sender]
-    }, { quoted: m });
+    // Invio dell'immagine di Vecteezy e del messaggio di sfida
+    try {
+        let msg = await conn.sendMessage(chatId, { 
+            image: { url: 'https://static.vecteezy.com/ti/vettori-gratis/p1/6409900-tic-tac-toe-sketched-isolato-gioco-vintage-in-stile-disegnato-a-mano-vettoriale.jpg' },
+            caption: renderBoard(board),
+            mentions: [m.sender]
+        }, { quoted: m });
 
-    global.tris[chatId].lastMsg = msg.key.id;
+        // Salviamo l'ID del messaggio se serve per futuri edit (opzionale)
+        global.tris[chatId].lastMsg = msg.key.id;
+
+    } catch (e) {
+        // Fallback in caso di errore caricamento immagine
+        console.error("Errore invio immagine Tris:", e);
+        await m.reply(renderBoard(board));
+    }
 };
 
+// Comandi per attivare il gioco
 handler.command = /^(tris|tictactoe|ttt)$/i;
+handler.group = true; // Consigliato per evitare spam in privato
+
 export default handler;
-
-
