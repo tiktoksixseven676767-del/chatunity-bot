@@ -55,7 +55,7 @@ handler.before = async function (m, { conn }) {
         
         // NUOVA GIF PINTEREST per ogni turno
         let newMsg = await conn.sendMessage(chatId, { 
-            video: { url: 'https://i.pinimg.com/originals/2f/52/13/2f5213443520758b6ad5667681e80d3f.gif' },
+            image: { url: 'https://i.pinimg.com/originals/2f/52/13/2f5213443520758b6ad5667681e80d3f.gif' },
             gifPlayback: true,
             caption: `🎮 Stanza: *${s.name}*\n\n${render(s.board)}\n\nTocca a @${s.turn.split('@')[0]}`,
             mentions: [s.turn]
