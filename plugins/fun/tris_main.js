@@ -21,14 +21,13 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
             lastMsg: null
         };
 
-        // Immagine Vecteezy per creazione stanza (Sostituito il vecchio link Globo)
+        // IMMAGINE VECTEEZY (Creazione stanza)
         await conn.sendMessage(chatId, { 
             image: { url: 'https://static.vecteezy.com/ti/vettori-gratis/p1/6409900-tic-tac-toe-sketched-isolato-gioco-vintage-in-stile-disegnato-a-mano-vettoriale.jpg' },
             caption: `🎮 Stanza *${roomName}* creata da @${senderId.split('@')[0]}!\n\nSfidante, scrivi: *.entratris ${roomName}*`,
             mentions: [senderId]
         }, { quoted: m });
 
-        // Auto-eliminazione dopo 5 minuti
         setTimeout(() => {
             if (global.trisSessions[roomId] && global.trisSessions[roomId].status === 'waiting') {
                 conn.sendMessage(chatId, { text: `⏰ Stanza *${roomName}* chiusa per inattività.` });
@@ -57,9 +56,10 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
             boardTxt += em[i] + ((i + 1) % 3 === 0 ? "\n" : "  ");
         }
 
-        // Immagine Vecteezy anche per l'inizio partita (Sostituita la GIF di Wikipedia)
+        // --- GIF PINTEREST (Inizio Round) ---
         let msg = await conn.sendMessage(chatId, { 
-            image: { url: 'https://static.vecteezy.com/ti/vettori-gratis/p1/6409900-tic-tac-toe-sketched-isolato-gioco-vintage-in-stile-disegnato-a-mano-vettoriale.jpg' },
+            video: { url: 'https://i.pinimg.com/originals/2f/52/13/2f5213443520758b6ad5667681e80d3f.gif' },
+            gifPlayback: true,
             caption: `🎮 Sfida Iniziata in *${roomName}*!\n❌ @${s.p1.split('@')[0]}\n⭕ @${senderId.split('@')[0]}\n\n${boardTxt}\n\nTocca a @${s.p1.split('@')[0]}!\n\n*(Rispondi a questo messaggio con un numero)*`,
             mentions: [s.p1, senderId]
         }, { quoted: m });
