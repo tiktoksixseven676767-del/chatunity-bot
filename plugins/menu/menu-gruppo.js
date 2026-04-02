@@ -86,7 +86,7 @@ function generateMenuText(prefix, userId, groupId) {
         // --- SEZIONE NUOVA ---
         createSection("ACQUISTABILI", `
 📢 *.tagall* (100k UC)
-👮‍♂️ *.acquista-polizia* (50k UC)`),
+👮‍♂️ *.acquistapolizia* (50k UC)`),
         // ---------------------------
         createSection(global.t('gamesCasinoSection', userId, groupId), `
 🎮 *.tris*
