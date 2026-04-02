@@ -122,6 +122,7 @@ function generateMenuText(prefix, userId, groupId) {
 🎮 *.tris*
 💣 *.minato* (campo minato)
 🎲 *.dado*
+🧑🏻‍💼 *impiccato*
 🏏 *.casinò*
 💰 *.scommessa* (${global.t('quantityCommand', userId, groupId)})
 💰 *.blackjack*
