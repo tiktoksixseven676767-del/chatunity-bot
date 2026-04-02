@@ -31,7 +31,7 @@ handler.before = async function (m, { conn }) {
     // SCONFITTA (Esplosione)
     if (s.errori >= s.maxErrori) {
         await conn.sendMessage(chatId, { 
-            video: { url: 'https://raw.githubusercontent.com/BrunoSobrino/TheMystic-Bot-MD/master/src/game/explocion.mp4' },
+            video: { url: 'https://neonflexmood.com/cdn/shop/files/Game_Over7_600x.png?v=1712936328' },
             gifPlayback: true,
             caption: `💀 *PERSO!* Sei stato polverizzato.\nLa parola era: *${s.parola}*`
         }, { quoted: m });
