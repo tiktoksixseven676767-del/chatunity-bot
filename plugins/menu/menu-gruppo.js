@@ -120,6 +120,7 @@ function generateMenuText(prefix, userId, groupId) {
 🔄 *.scambia*`),
         createSection(global.t('gamesCasinoSection', userId, groupId), `
 🎮 *.tris*
+💣 *.minato* (campo minato)
 🎲 *.dado*
 🏏 *.casinò*
 💰 *.scommessa* (${global.t('quantityCommand', userId, groupId)})
