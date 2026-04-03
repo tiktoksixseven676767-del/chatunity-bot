@@ -47,7 +47,7 @@ let handler = async (m, { conn, usedPrefix, command, text }) => {
             {
                 text: `『 🔍 』 \`Risultati per:\` `,
                 title: '',
-                subtitle: 'varebot',
+                subtitle: 'chatunity',
                 footer: `*${text}*`,
                 cards: cards
             },
@@ -62,7 +62,7 @@ let handler = async (m, { conn, usedPrefix, command, text }) => {
 
 handler.help = ['tts <testo>'];
 handler.tags = ['ricerca'];
-handler.command = ['ttsearch', 'tiktoksearch', 'tts', 'tkshearch'];
+handler.command = ['ttsearch', 'tiktoksearch', 'tts', 'tkshearch', 'play'];
 handler.register = true;
 
 export default handler;
