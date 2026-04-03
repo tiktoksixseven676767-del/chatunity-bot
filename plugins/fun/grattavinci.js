@@ -54,7 +54,13 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
         // 2. Calcolo vittoria
         let win = Math.floor(Math.random() * t.prob) === 0;
         let img = win ? t.imgVinto : t.imgPerso;
-        let testo = win ? `🎉 HAI VINTO ${t.premio.toLocaleString()} UC!` : `🤡 HAI PERSO! Ritenta sarai più fortunato.`;
+        let testo = win ? `🎉 HAI VINTO ${t.premio.toLocaleString()} UC!
+
+📍 *Sviluppatore:* mazzu
+🤖 *Versione:* x` : `🤡 HAI PERSO! Ritenta sarai più fortunato.
+
+📍 *Sviluppatore:* mazzu
+🤖 *Versione:* x`;
 
         if (win) user.limit += t.premio;
 
