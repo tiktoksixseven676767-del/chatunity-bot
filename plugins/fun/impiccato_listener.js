@@ -32,7 +32,10 @@ handler.before = async function (m, { conn }) {
         delete global.minato[m.chat]
         
         return conn.sendMessage(m.chat, {
-            text: `💥 *BOOM!* Hai calpestato una mina!\n\n${finalBoard}\n\n🤡 Hai perso la tua puntata.`,
+            text: `💥 *BOOM!* Hai calpestato una mina!\n\n${finalBoard}\n\n🤡 Hai perso la tua puntata
+
+📍 *Sviluppatore:* mazzu
+🤖 *Versione:* x.`,
         }, { quoted: m })
     } else {
         // --- CASELLA SICURA ---
