@@ -83,6 +83,16 @@ function generateMenuText(prefix, userId, groupId) {
 🔄 *.evolvi*
 🎒 *.inventario*
 🔄 *.scambia*`),
+
+createSection("🎫 GRATITA E VINCI", `
+🛒 *.buygrattavinci* 100k {q.tà}
+🛒 *.buygrattavinci* milionario {q.tà}
+🛒 *.buygrattavinci* miliardario {q.tà}
+🔓 *.aprigrattavinci* {tipo}
+🎒 *.inventariograttavinci*`)
+ℹ️ *infograttaevinci*
+,
+
         // --- SEZIONE NUOVA ---
         createSection("ACQUISTABILI", `
 📢 *.tagall* (100k UC)
@@ -108,6 +118,9 @@ function generateMenuText(prefix, userId, groupId) {
 💌 *.amore*
 💋 *.bacia*
 🗣️ *.rizz*
+🍆 *.sega*
+🍑 *.ditalino*
+🔥 *.scopa*
 🖕 *.insulta*
 👥 *.amicizia*`)
     ];
