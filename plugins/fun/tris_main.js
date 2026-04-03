@@ -45,7 +45,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
 
         if (!s) return m.reply(`Stanza non trovata.`);
         if (s.status === 'playing') return m.reply(`Partita già in corso.`);
-        if (s.p1 === senderId) return m.reply(`Non puoi giocare da solo.`);
+        if (s.p1 === senderId) return m.reply(`sei stupido? non puoi giocare da solo.`);
 
         s.p2 = senderId;
         s.status = 'playing';
