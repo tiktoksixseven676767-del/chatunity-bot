@@ -94,7 +94,7 @@ function generateMenuText(prefix, userId, groupId) {
 🛒 *.buygrattavinci* miliardario 
 🔓 *.aprigrattavinci* {tipo}
 🎒 *.inventariograttavinci*`)
-ℹ️ *infograttaevinci*`,
+👆🏻 *infograttaevinci*`,
         // ---------------------------
         createSection(global.t('gamesCasinoSection', userId, groupId), `
 🎮 *.tris*
