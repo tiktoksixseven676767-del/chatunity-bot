@@ -1,65 +1,71 @@
-global.impiccato = global.impiccato || {};
-
-let handler = m => m;
-
+let handler = m => m
 handler.before = async function (m, { conn }) {
-    const chatId = m.chat;
-    const s = global.impiccato[chatId];
-    
-    // Filtro: deve esserci una sessione e il messaggio deve essere di una sola lettera
-    if (!s || !m.text || m.text.length !== 1) return;
-    
-    let lettera = m.text.toUpperCase();
-    if (!/[A-Z]/.test(lettera)) return;
+    if (!m.quoted || !m.text || !m.quoted.fromMe || !m.quoted.text) return
+    if (!/📦|💣|✅|🟩/i.test(m.quoted.text)) return // Verifica che sia un messaggio di Campo Minato
 
-    if (s.indovinate.includes(lettera)) return; 
-    s.indovinate.push(lettera);
+    let user = global.db.data.users[m.sender]
+    let msg = m.quoted.text
+    
+    // Estraiamo i dati del gioco dal testo del messaggio (o dalla sessione se la usi)
+    // Qui usiamo una logica basata sulla risposta al messaggio per semplicità
+    let Choice = parseInt(m.text.trim())
+    if (isNaN(Choice) || Choice < 1 || Choice > 9) return
 
-    if (!s.parola.includes(lettera)) {
-        s.errori++;
+    let index = Choice - 1
+    let board = []
+    
+    // Recuperiamo lo stato attuale della board dal messaggio quotato
+    let rows = msg.split('\n').filter(v => v.includes('1️⃣') || v.includes('📦') || v.includes('💣'))
+    // Nota: Questa è una versione semplificata. Se hai un global.minato[m.chat], usa quello!
+    
+    // Esempio di gestione tramite sessione globale (scelta consigliata)
+    if (!global.minato) global.minato = {}
+    let game = global.minato[m.chat]
+    if (!game || game.p1 !== m.sender || m.quoted.id !== game.msgId) return
+
+    if (game.board[index] !== '📦') return m.reply('❌ Casella già selezionata!')
+
+    if (index === game.mine) {
+        // --- HAI BECCATO LA BOMBA ---
+        game.board[index] = '💣'
+        let finalBoard = renderBoard(game.board)
+        delete global.minato[m.chat]
+        
+        return conn.sendMessage(m.chat, {
+            text: `💥 *BOOM!* Hai calpestato una mina!\n\n${finalBoard}\n\n🤡 Hai perso la tua puntata.`,
+        }, { quoted: m })
+    } else {
+        // --- CASELLA SICURA ---
+        game.board[index] = '✅'
+        game.safeCount--
+
+        if (game.safeCount === 0) {
+            // --- VITTORIA ---
+            let premio = game.bet * 2
+            user.limit += premio
+            let finalBoard = renderBoard(game.board)
+            delete global.minato[m.chat]
+
+            return conn.sendMessage(m.chat, {
+                text: `🎉 *COMPLIMENTI!* Hai sminato tutto!\n\n${finalBoard}\n\n💰 Premio: *${premio.toLocaleString()} UC*`,
+            }, { quoted: m })
+        } else {
+            // --- CONTINUA A GIOCARE ---
+            let currentBoard = renderBoard(game.board)
+            let newMsg = await conn.sendMessage(m.chat, {
+                text: `📦 *CAMPO MINATO*\n\n${currentBoard}\n\nContinua! Mancano *${game.safeCount}* caselle sicure.\nRispondi con un numero da 1 a 9.`,
+            }, { quoted: m })
+            game.msgId = newMsg.key.id
+        }
     }
-
-    let display = s.parola.split('').map(l => s.indovinate.includes(l) ? l : '_').join(' ');
-// 🏆 VITTORIA
-if (s.parola.split('').every(l => s.indovinate.includes(l))) {
-    let textWin = `🏆 *VINTO!* Complimenti!\nLa parola era: *${s.parola}*`;
-    
-    try {
-        await conn.sendMessage(chatId, { 
-            image: { url: 'https://media.tenor.com/JiPYLfR7lkIAAAAe/you-won-youwin.png' },
-            caption: textWin
-        }, { quoted: m });
-    } catch (e) {
-        // Fallback se l'immagine non carica
-        await conn.sendMessage(chatId, { text: textWin }, { quoted: m });
-    } finally {
-        // Reset sessione fondamentale
-        delete global.impiccato[chatId];
-    }
-    return true;
 }
 
-// 💀 SCONFITTA (Con immagine Game Over)
-if (s.errori >= s.maxErrori) {
-    let textLost = `💀 *GAME OVER* 💀\n\nSei stato eliminato! La parola era: *${s.parola}*`;
-    
-    try {
-        await conn.sendMessage(chatId, { 
-            image: { url: 'https://neonflexmood.com/cdn/shop/files/Game_Over7_600x.png?v=1712936328' },
-            caption: textLost
-        }, { quoted: m });
-    } catch (e) {
-        await conn.sendMessage(chatId, { text: textLost }, { quoted: m });
-    } finally {
-        delete global.impiccato[chatId];
+function renderBoard(board) {
+    let res = ""
+    for (let i = 0; i < board.length; i++) {
+        res += board[i] + ((i + 1) % 3 === 0 ? '\n' : ' ')
     }
-    return true;
+    return res
 }
 
-
-    // AGGIORNAMENTO STATO
-    await m.reply(`🎮 *IMPICCATO*\n\nParola: \`${display}\` \n\nLettere: ${s.indovinate.join(', ')}\nErrori: ${s.errori}/${s.maxErrori}`);
-    return true;
-};
-
-export default handler;
+export default handler
