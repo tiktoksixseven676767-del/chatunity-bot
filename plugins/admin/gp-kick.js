@@ -94,7 +94,7 @@ async function handler(m, { isBotAdmin, isOwner, text, command, conn }) {
   }
 }
 
-handler.customPrefix = /^(\.?kick|\.?simkick|rimuovi|frociopotente|grandepuffo|sparisci|expulsar|expulsión|expulsar_pt|glipiaceilcazzo|expulsão|expulser|expulsion|rauswerfen|ausschließen|выгнать|удалить|طرد|إخراج|निकालना|बाहरकाढना|踢出|移除|tendang|keluar|atmak|kovmak)(?=\s|$)/i
+handler.customPrefix = /^(\.?kick|\.?simkick|rimuovi|frociopotente|puffo|sparisci|expulsar|expulsión|expulsar_pt|glipiaceilcazzo|expulsão|expulser|expulsion|rauswerfen|ausschließen|выгнать|удалить|طرد|إخراج|निकालना|बाहरकाढना|踢出|移除|tendang|keluar|atmak|kovmak)(?=\s|$)/i
 handler.command = new RegExp
 handler.admin = true
 
