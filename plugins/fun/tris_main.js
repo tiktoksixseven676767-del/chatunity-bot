@@ -1,38 +1,43 @@
-import TicTacToe from '../../lib/tictactoe.js' // Assicurati che il percorso sia corretto
-
 let handler = async (m, { conn, usedPrefix, command, text }) => {
-    conn.game = conn.game ? conn.game : {}
-    if (Object.values(conn.game).find(room => room.id.startsWith('tictactoe') && [room.game.p1, room.game.p2].includes(m.sender))) throw `⚠️ Sei ancora in una partita! Finiscila prima di iniziarne un'altra.`
+    conn.tris = conn.tris ? conn.tris : {}
+    if (Object.values(conn.tris).find(room => room.id.startsWith('tris') && [room.p1, room.p2].includes(m.sender))) throw '⚠️ Sei già in una partita!'
     
-    let room = Object.values(conn.game).find(room => room.state === 'WAITING' && (text ? room.name === text : true))
+    let room = Object.values(conn.tris).find(room => room.state === 'WAITING')
+    
     if (room) {
-        m.reply('✅ Partita trovata! Iniziamo...')
         room.o = m.chat
-        room.game.p2 = m.sender
+        room.p2 = m.sender
         room.state = 'PLAYING'
-        let status = `🎮 *TRIS / TIC-TAC-TOE*\n\n` + 
-                     `Player 1: @${room.game.p1.split('@')[0]} (X)\n` +
-                     `Player 2: @${room.game.p2.split('@')[0]} (O)\n\n` +
-                     `${room.game.render().map(v => v === 'X' ? '❌' : v === 'O' ? '⭕' : v === 1 ? '1️⃣' : v === 2 ? '2️⃣' : v === 3 ? '3️⃣' : v === 4 ? '4️⃣' : v === 5 ? '5️⃣' : v === 6 ? '6️⃣' : v === 7 ? '7️⃣' : v === 8 ? '8️⃣' : '9️⃣').join('')}\n\n` +
-                     `Tocca a @${room.game.currentTurn.split('@')[0]}`
+        let str = `🎮 *PARTITA DI TRIS INIZIATA!*\n\n` +
+                  `❌ @${room.p1.split('@')[0]}\n` +
+                  `⭕ @${room.p2.split('@')[0]}\n\n` +
+                  renderBoard(room.board) + `\n\n` +
+                  `Tocca a @${room.turn.split('@')[0]}`
         
-        conn.sendMessage(m.chat, { text: status, mentions: [room.game.p1, room.game.p2] }, { quoted: m })
+        await conn.sendMessage(m.chat, { text: str, mentions: [room.p1, room.p2] }, { quoted: m })
     } else {
         room = {
-            id: 'tictactoe-' + (+new Date),
+            id: 'tris-' + (+new Date),
             p1: m.sender,
-            game: new TicTacToe(m.sender, 'o'),
+            p2: '',
+            board: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+            turn: m.sender,
             state: 'WAITING'
         }
-        if (text) room.name = text
-        m.reply(`⏳ In attesa di uno sfidante...\nQualcuno scriva *${usedPrefix}${command}* per accettare la sfida.`)
-        conn.game[room.id] = room
+        conn.tris[room.id] = room
+        m.reply(`⏳ In attesa di uno sfidante...\nQualcuno scriva *${usedPrefix}${command}* per giocare!`)
     }
+}
+
+function renderBoard(board) {
+    let emojis = { 'X': '❌', 'O': '⭕', 1: '1️⃣', 2: '2️⃣', 3: '3️⃣', 4: '4️⃣', 5: '5️⃣', 6: '6️⃣', 7: '7️⃣', 8: '8️⃣', 9: '9️⃣' }
+    let res = []
+    for (let i = 0; i < 9; i += 3) res.push(board.slice(i, i + 3).map(v => emojis[v] || v).join(''))
+    return res.join('\n')
 }
 
 handler.help = ['tris']
 handler.tags = ['game']
-handler.command = /^(tris|tictactoe|ttc)$/i
+handler.command = /^(tris|tictactoe)$/i
 handler.group = true
-
 export default handler
