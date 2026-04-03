@@ -3,7 +3,7 @@ let handler = async (m, { conn, usedPrefix, command }) => {
     const testoInfo = `
 ✨ *BENVENUTO SU ${conn.user.name.toUpperCase()}* ✨
 
-usa .compragrattaevinci {tipo} {quantità} per comprare i gratta e vinci 
+usa .buygrattaevinci {tipo} {quantità} per comprare i gratta e vinci 
 ci sono i seguenti gratta e vinci 
 
 
@@ -21,6 +21,7 @@ per aprirli fai
 
 esempio 
 .aprigrattavinci 100k.
+
 📍 *Sviluppatore:* mazzu
 🤖 *Versione:* x
 
