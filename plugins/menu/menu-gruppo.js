@@ -87,14 +87,14 @@ function generateMenuText(prefix, userId, groupId) {
         // --- SEZIONE NUOVA ---
         createSection("ACQUISTABILI", `
 📢 *.tagall* (100k UC)
-👮‍♂️ *.acquistapolizia* (50k UC)`)
+👮‍♂️ *.acquistapolizia* (50k UC)
 
-💈 *.buygrattavinci* 100k 
-💈 *.buygrattavinci* milionario 
-💈 *.buygrattavinci* miliardario
-🔓 *.aprigrattavinci* tipo
+🛒 *.buygrattavinci* 100k 
+🛒 *.buygrattavinci* milionario 
+🛒 *.buygrattavinci* miliardario 
+🔓 *.aprigrattavinci* {tipo}
 🎒 *.inventariograttavinci*`)
-ℹ️ *infograttaevinci*,
+ℹ️ *infograttaevinci*`,
         // ---------------------------
         createSection(global.t('gamesCasinoSection', userId, groupId), `
 🎮 *.tris*
