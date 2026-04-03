@@ -1,43 +1,49 @@
 let handler = m => m
 handler.before = async function (m) {
-    this.game = this.game ? this.game : {}
-    let room = Object.values(this.game).find(room => room.id.startsWith('tictactoe') && [room.game.p1, room.game.p2].includes(m.sender) && room.state === 'PLAYING')
+    this.tris = this.tris ? this.tris : {}
+    let room = Object.values(this.tris).find(room => room.state === 'PLAYING' && [room.p1, room.p2].includes(m.sender) && room.id.startsWith('tris'))
     
-    if (room) {
-        let ok
-        let isWin = false
-        let isTie = false
-        let isSurrender = false
+    if (room && /^[1-9]$/.test(m.text) && m.sender === room.turn) {
+        let index = parseInt(m.text) - 1
+        if (typeof room.board[index] !== 'number') return m.reply('🚫 Casella già occupata!')
         
-        if (!/^[1-9]$/.test(m.text)) return !0 // Se non è un numero da 1 a 9, ignora
+        room.board[index] = room.turn === room.p1 ? 'X' : 'O'
+        room.turn = room.turn === room.p1 ? room.p2 : room.p1
         
-        if (m.sender !== room.game.currentTurn) return !0 // Non è il tuo turno
+        let win = checkWinner(room.board)
+        let tie = room.board.filter(v => typeof v === 'number').length === 0
+        let str = `🎮 *TRIS*\n\n${renderBoard(room.board)}\n\n`
         
-        if ((ok = room.game.fill(m.sender, parseInt(m.text) - 1)) < 1) {
-            m.reply(ok == -3 ? '❌ Partita già finita' : '🚫 Posto già occupato!')
-            return !0
-        }
-        
-        isWin = room.game.winner
-        isTie = room.game.board.filter(v => v).length === 9
-        
-        let str = `🎮 *TRIS / TIC-TAC-TOE*\n\n` +
-                  `${room.game.render().map(v => v === 'X' ? '❌' : v === 'O' ? '⭕' : v === 1 ? '1️⃣' : v === 2 ? '2️⃣' : v === 3 ? '3️⃣' : v === 4 ? '4️⃣' : v === 5 ? '5️⃣' : v === 6 ? '6️⃣' : v === 7 ? '7️⃣' : v === 8 ? '8️⃣' : '9️⃣').join('')}\n\n`
-        
-        if (isWin) {
-            str += `🥳 @${isWin.split('@')[0]} HA VINTO! 🎉`
-            global.db.data.users[isWin].limit += 500 // Premio vittoria
-        } else if (isTie) {
-            str += `🤝 PAREGGIO! Nessun vincitore.`
+        if (win) {
+            let winner = win === 'X' ? room.p1 : room.p2
+            str += `🥳 @${winner.split('@')[0]} HA VINTO! 🏆`
+            if (global.db.data.users[winner]) global.db.data.users[winner].limit += 1000
+            delete this.tris[room.id]
+        } else if (tie) {
+            str += `🤝 PAREGGIO!`
+            delete this.tris[room.id]
         } else {
-            str += `Tocca a @${room.game.currentTurn.split('@')[0]}`
+            str += `Prossimo turno: @${room.turn.split('@')[0]}`
         }
         
-        await this.sendMessage(m.chat, { text: str, mentions: [room.game.p1, room.game.p2] }, { quoted: m })
-        
-        if (isWin || isTie) delete this.game[room.id] // Chiude la stanza
+        await this.sendMessage(m.chat, { text: str, mentions: [room.p1, room.p2] }, { quoted: m })
     }
     return !0
+}
+
+function checkWinner(b) {
+    const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]
+    for (let [a, b_idx, c] of lines) {
+        if (b[a] && b[a] === b[b_idx] && b[a] === b[c]) return b[a]
+    }
+    return null
+}
+
+function renderBoard(board) {
+    let emojis = { 'X': '❌', 'O': '⭕', 1: '1️⃣', 2: '2️⃣', 3: '3️⃣', 4: '4️⃣', 5: '5️⃣', 6: '6️⃣', 7: '7️⃣', 8: '8️⃣', 9: '9️⃣' }
+    let res = []
+    for (let i = 0; i < 9; i += 3) res.push(board.slice(i, i + 3).map(v => emojis[v] || v).join(''))
+    return res.join('\n')
 }
 
 export default handler
