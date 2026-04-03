@@ -54,7 +54,10 @@ handler.before = async function (m, { conn }) {
         let finalStr = `${render(s.board)}\n\n`;
         
         if (result === 'Pareggio') {
-            finalStr += "🤝 *PAREGGIO!* La sfida finisce qui senza vincitori.";
+            finalStr += "🤝 *PAREGGIO!* La sfida finisce qui senza vincitori.
+
+📍 *Sviluppatore:* mazzu
+🤖 *Versione:* x";
         } else {
             let winnerId = (result === 'X' ? s.p1 : s.p2);
             
@@ -65,7 +68,10 @@ handler.before = async function (m, { conn }) {
             // Aggiunge 500 al saldo (limit) del vincitore
             global.db.data.users[winnerId].limit = (global.db.data.users[winnerId].limit || 0) + 500;
             
-            finalStr += `🏆 *VITTORIA!* @${winnerId.split('@')[0]} ha vinto la partita!\n💰 Premio: *500 UC* accreditati sul tuo profilo!`;
+            finalStr += `🏆 *VITTORIA!* @${winnerId.split('@')[0]} ha vinto la partita!\n💰 Premio: *500 UC* accreditati sul tuo profilo!
+
+📍 *Sviluppatore:* mazzu
+🤖 *Versione:* x`;
         }
 
         // Messaggio finale con immagine Globo
