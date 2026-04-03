@@ -84,6 +84,7 @@ function generateMenuText(prefix, userId, groupId) {
 🌍 *.meteo* (${global.t('cityCommand', userId, groupId)})
 ℹ️ *.lookup*
 🔥 *.ip*
+📨 *.creamail*
 🌐 *.traduci* (${global.t('textCommand', userId, groupId)})
 ℹ️ *.info* [@${global.t('userCommand', userId, groupId)}]
 📜 *.regole*
