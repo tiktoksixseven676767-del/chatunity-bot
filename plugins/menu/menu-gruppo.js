@@ -89,9 +89,9 @@ function generateMenuText(prefix, userId, groupId) {
 📢 *.tagall* (100k UC)
 👮‍♂️ *.acquistapolizia* (50k UC)`)
 
-🛒 *.buygrattavinci* 100k 
-🛒 *.buygrattavinci* milionario 
-🛒 *.buygrattavinci* miliardario
+💈 *.buygrattavinci* 100k 
+💈 *.buygrattavinci* milionario 
+💈 *.buygrattavinci* miliardario
 🔓 *.aprigrattavinci* tipo
 🎒 *.inventariograttavinci*`)
 ℹ️ *infograttaevinci*,
