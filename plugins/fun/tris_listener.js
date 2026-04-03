@@ -12,21 +12,34 @@ handler.before = async function (m) {
         
         let win = checkWinner(room.board)
         let tie = room.board.filter(v => typeof v === 'number').length === 0
-        let str = `🎮 *TRIS*\n\n${renderBoard(room.board)}\n\n`
+        
+        // --- LOGICA IMMAGINI ---
+        // Usiamo i link che hai fornito sopra per X e O
+        let imgX = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSEQOPcBWGrdr9nBhuqfvO7V-jw1VLhKhc4C8nQZmXIJw&s=10' 
+        let imgO = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRjo0kv9X9JYcdmcrqWSUBZo3vyqlT_prw1oxFA0mllrw&s=10'
+        
+        let currentImg = room.board[index] === 'X' ? imgX : imgO
+        let boardStr = renderBoard(room.board)
+        let msg = `🎮 *MOSSA EFFETTUATA*\n\n${boardStr}\n\n`
         
         if (win) {
             let winner = win === 'X' ? room.p1 : room.p2
-            str += `🥳 @${winner.split('@')[0]} HA VINTO! 🏆`
+            msg += `🏆 *VITTORIA!* @${winner.split('@')[0]} ha vinto!\n💰 Premio: *1.000 UC*`
             if (global.db.data.users[winner]) global.db.data.users[winner].limit += 1000
             delete this.tris[room.id]
         } else if (tie) {
-            str += `🤝 PAREGGIO!`
+            msg += `🤝 *PAREGGIO!* Nessun vincitore.`
             delete this.tris[room.id]
         } else {
-            str += `Prossimo turno: @${room.turn.split('@')[0]}`
+            msg += `🕹️ Prossimo turno: @${room.turn.split('@')[0]}`
         }
         
-        await this.sendMessage(m.chat, { text: str, mentions: [room.p1, room.p2] }, { quoted: m })
+        // Invia l'immagine della mossa appena fatta
+        await this.sendMessage(m.chat, { 
+            image: { url: currentImg }, 
+            caption: msg, 
+            mentions: [room.p1, room.p2] 
+        }, { quoted: m })
     }
     return !0
 }
@@ -41,9 +54,13 @@ function checkWinner(b) {
 
 function renderBoard(board) {
     let emojis = { 'X': '❌', 'O': '⭕', 1: '1️⃣', 2: '2️⃣', 3: '3️⃣', 4: '4️⃣', 5: '5️⃣', 6: '6️⃣', 7: '7️⃣', 8: '8️⃣', 9: '9️⃣' }
-    let res = []
-    for (let i = 0; i < 9; i += 3) res.push(board.slice(i, i + 3).map(v => emojis[v] || v).join(''))
-    return res.join('\n')
+    let res = ""
+    for (let i = 0; i < 9; i++) {
+        res += emojis[board[i]]
+        if ((i + 1) % 3 === 0) res += "\n"
+        else res += " "
+    }
+    return res
 }
 
 export default handler
