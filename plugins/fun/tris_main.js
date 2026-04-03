@@ -1,73 +1,38 @@
-global.trisSessions = global.trisSessions || {};
+import TicTacToe from '../../lib/tictactoe.js' // Assicurati che il percorso sia corretto
 
-let handler = async (m, { conn, text, usedPrefix, command }) => {
-    const chatId = m.chat;
-    const senderId = m.sender;
-
-    if (command === 'tris') {
-        if (!text) return m.reply(`Indica un nome per la stanza!\nEsempio: *${usedPrefix}tris sfida1*`);
-        let roomName = text.toLowerCase().trim();
-        let roomId = chatId + roomName;
-
-        if (global.trisSessions[roomId]) return m.reply(`La stanza *${roomName}* è già attiva.`);
-
-        global.trisSessions[roomId] = {
-            name: roomName,
-            board: Array(9).fill(null),
-            p1: senderId,
-            p2: null,
-            turn: senderId,
-            status: 'waiting',
-            lastMsg: null
-        };
-
-        // --- INVITO (IMMAGINE GLOBO) ---
-        await conn.sendMessage(chatId, { 
-            image: { url: 'https://www.globo.it/wp-content/uploads/2018/12/Il-gioco-del-tris-1536x1025.jpg' },
-            caption: `🎮 Stanza *${roomName}* creata da @${senderId.split('@')[0]}!\n\nSfidante, scrivi: *.entratris ${roomName}*`,
-            mentions: [senderId]
-        }, { quoted: m });
-
-        setTimeout(() => {
-            if (global.trisSessions[roomId] && global.trisSessions[roomId].status === 'waiting') {
-                conn.sendMessage(chatId, { text: `⏰ Stanza *${roomName}* chiusa per inattività.` });
-                delete global.trisSessions[roomId];
-            }
-        }, 5 * 60 * 1000);
-        return;
-    }
-
-    if (command === 'entratris') {
-        if (!text) return m.reply(`Specifica il nome della stanza.`);
-        let roomName = text.toLowerCase().trim();
-        let roomId = chatId + roomName;
-        let s = global.trisSessions[roomId];
-
-        if (!s) return m.reply(`Stanza non trovata.`);
-        if (s.status === 'playing') return m.reply(`Partita già in corso.`);
-        if (s.p1 === senderId) return m.reply(`sei stupido? non puoi giocare da solo.`);
-
-        s.p2 = senderId;
-        s.status = 'playing';
-
-        const em = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
-        let boardTxt = "";
-        for (let i = 0; i < 9; i++) {
-            boardTxt += em[i] + ((i + 1) % 3 === 0 ? "\n" : "  ");
-        }
-
-        // --- INIZIO SFIDA (IMMAGINE VECTEEZY) ---
-        // Ho rimosso completamente ogni riferimento a "video" o "gif" per evitare il doppio invio
-        let msg = await conn.sendMessage(chatId, { 
-            image: { url: 'https://static.vecteezy.com/ti/vettori-gratis/p1/6409900-tic-tac-toe-sketched-isolato-gioco-vintage-in-stile-disegnato-a-mano-vettoriale.jpg' },
-            caption: `🎮 Sfida Iniziata in *${roomName}*!\n❌ @${s.p1.split('@')[0]}\n⭕ @${senderId.split('@')[0]}\n\n${boardTxt}\n\nTocca a @${s.p1.split('@')[0]}!\n\n*(Rispondi con un numero)*`,
-            mentions: [s.p1, senderId]
-        }, { quoted: m });
+let handler = async (m, { conn, usedPrefix, command, text }) => {
+    conn.game = conn.game ? conn.game : {}
+    if (Object.values(conn.game).find(room => room.id.startsWith('tictactoe') && [room.game.p1, room.game.p2].includes(m.sender))) throw `⚠️ Sei ancora in una partita! Finiscila prima di iniziarne un'altra.`
+    
+    let room = Object.values(conn.game).find(room => room.state === 'WAITING' && (text ? room.name === text : true))
+    if (room) {
+        m.reply('✅ Partita trovata! Iniziamo...')
+        room.o = m.chat
+        room.game.p2 = m.sender
+        room.state = 'PLAYING'
+        let status = `🎮 *TRIS / TIC-TAC-TOE*\n\n` + 
+                     `Player 1: @${room.game.p1.split('@')[0]} (X)\n` +
+                     `Player 2: @${room.game.p2.split('@')[0]} (O)\n\n` +
+                     `${room.game.render().map(v => v === 'X' ? '❌' : v === 'O' ? '⭕' : v === 1 ? '1️⃣' : v === 2 ? '2️⃣' : v === 3 ? '3️⃣' : v === 4 ? '4️⃣' : v === 5 ? '5️⃣' : v === 6 ? '6️⃣' : v === 7 ? '7️⃣' : v === 8 ? '8️⃣' : '9️⃣').join('')}\n\n` +
+                     `Tocca a @${room.game.currentTurn.split('@')[0]}`
         
-        s.lastMsg = msg.key.id;
-        return; // Importante per fermare l'esecuzione qui
+        conn.sendMessage(m.chat, { text: status, mentions: [room.game.p1, room.game.p2] }, { quoted: m })
+    } else {
+        room = {
+            id: 'tictactoe-' + (+new Date),
+            p1: m.sender,
+            game: new TicTacToe(m.sender, 'o'),
+            state: 'WAITING'
+        }
+        if (text) room.name = text
+        m.reply(`⏳ In attesa di uno sfidante...\nQualcuno scriva *${usedPrefix}${command}* per accettare la sfida.`)
+        conn.game[room.id] = room
     }
-};
+}
 
-handler.command = /^(tris|entratris)$/i;
-export default handler;
+handler.help = ['tris']
+handler.tags = ['game']
+handler.command = /^(tris|tictactoe|ttc)$/i
+handler.group = true
+
+export default handler
