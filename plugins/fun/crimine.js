@@ -25,7 +25,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     let successo = Math.random() < 0.45
 
     if (successo) {
-        let vincita = amount // Raddoppia la puntata (vince il 100% di quello che mette)
+        let vincita = amount // Raddoppia la puntata (vince il 200% di quello che mette)
         user.limit += vincita
         m.reply(`✅ *COLPO RIUSCITO!*\n\n${colpo}\n💰 Hai guadagnato: *+${vincita.toLocaleString()} UC*`)
     } else {
