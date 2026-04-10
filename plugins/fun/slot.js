@@ -1,86 +1,100 @@
-let cooldowns = {}
+import fetch from 'node-fetch';
 
-let handler = async (m, { conn, args, usedPrefix, command }) => {
-    let user = global.db.data.users[m.sender]
-    let bet = args[0] ? parseInt(args[0]) : 20
+const rarityCosts = {
+  'Comune': 100,
+  'Non Comune': 1000,
+  'Raro': 10000,
+  'Leggendario': 100000
+};
 
-    if (isNaN(bet) || bet <= 0) {
-        return conn.reply(m.chat, '❌ Puntata non valida.\nEsempio: *' + usedPrefix + command + ' 100*', m)
-    }
-
-    if ((user.limit || 0) < bet) {
-        return conn.reply(m.chat, '🚫 UC insufficienti! Ti servono ' + bet + ' UC.', m)
-    }
-
-    if (cooldowns[m.sender] && Date.now() - cooldowns[m.sender] < 300000) {
-        let timeLeft = cooldowns[m.sender] + 300000 - Date.now()
-        let min = Math.floor(timeLeft / 60000)
-        let sec = Math.floor((timeLeft % 60000) / 1000)
-        return conn.reply(m.chat, '⏳ Aspetta ' + min + 'm ' + sec + 's prima di giocare di nuovo.', m)
-    }
-
-    let win = Math.random() < 0.5
-    let resultMsg, gifFile
-
-
-    user.exp = Number(user.exp) || 0
-    user.level = Number(user.level) || 1
-    let { min: minXP, xp: levelXP, max: maxXP } = xpRange(user.level, global.multiplier || 1)
-    let currentLevelXP = user.exp - minXP
-
-    if (win) {
-        user.limit = (user.limit || 0) + 800
-        user.exp = (user.exp || 0) + 100
-        resultMsg = '🎉 *Hai vinto!*\n'
-        resultMsg += '┌──────────────\n'
-        resultMsg += '│ ➕ *800 UC*\n'
-        resultMsg += '│ ➕ *100 XP*\n'
-        resultMsg += '└──────────────\n'
-        gifFile = './media/perdita.gif'  // Cambiato in GIF
-    } else {
-        user.limit = (user.limit || 0) - bet
-        user.exp = Math.max(0, (user.exp || 0) - bet)
-        resultMsg = '🤡 *Hai perso!*\n'
-        resultMsg += '┌──────────────\n'
-        resultMsg += '│ ➖ *' + bet + ' UC*\n'
-        resultMsg += '│ ➖ *' + bet + ' XP*\n'
-        resultMsg += '└──────────────\n'
-        gifFile = './media/vincita.gif'  // Cambiato in GIF
-    }
-
-
-    resultMsg += '\n💎 *SALDO ATTUALE*\n'
-    resultMsg += '┌──────────────\n'
-    resultMsg += '│ 👛 *UC: ' + (user.limit || 0) + '*\n'
-    resultMsg += '│ ⭐ *XP: ' + (user.exp || 0) + '*\n'
-    resultMsg += '│ 📊 *Progresso: ' + currentLevelXP + '/' + levelXP + ' XP*\n'
-    resultMsg += '└──────────────\n'
-    resultMsg += '\nℹ️ Usa ' + usedPrefix + 'menuxp per guadagnare più XP!'
-
-    // Invia la GIF invece del video
-    await conn.sendMessage(m.chat, { 
-        video: { url: gifFile }, 
-        gifPlayback: true 
-    }, { quoted: m })
-
-    cooldowns[m.sender] = Date.now()
-
-    // Aspetta 3 secondi e manda il risultato
-    await new Promise(resolve => setTimeout(resolve, 3000))
-    await conn.reply(m.chat, resultMsg, m)
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-handler.help = ['slot <puntata>']
-handler.tags = ['game']
-handler.command = ['slot']
+async function getEvolution(name) {
+  try {
+    const speciesRes = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${name.toLowerCase()}`);
+    if (!speciesRes.ok) return null;
+    const speciesData = await speciesRes.json();
+    const evoChainUrl = speciesData.evolution_chain?.url;
+    if (!evoChainUrl) return null;
 
-export default handler
+    const evoRes = await fetch(evoChainUrl);
+    if (!evoRes.ok) return null;
+    const evoData = await evoRes.json();
 
+    function findNextEvolution(chain) {
+      if (chain.species.name.toLowerCase() === name.toLowerCase()) {
+        return chain.evolves_to?.[0]?.species?.name || null;
+      }
+      for (const evo of chain.evolves_to) {
+        const result = findNextEvolution(evo);
+        if (result) return result;
+      }
+      return null;
+    }
 
-function xpRange(level, multiplier = 1) {
-    if(level < 0) level = 0
-    let min = level === 0 ? 0 : Math.pow(level, 2) * 20
-    let max = Math.pow(level + 1, 2) * 20
-    let xp = Math.floor((max - min) * multiplier)
-    return { min, xp, max }
+    const nextEvo = findNextEvolution(evoData.chain);
+    return nextEvo;
+  } catch (err) {
+    console.error('Errore durante il recupero dell\'evoluzione:', err);
+    return null;
+  }
 }
+
+let handler = async (m, { conn, args }) => {
+  const user = m.sender;
+  const userId = m.sender;
+  const groupId = m.chat;
+
+  global.db.data.users[user] = global.db.data.users[user] || {};
+  const data = global.db.data.users[user];
+
+  // La variabile corretta è 'limit' (usata come UnityCoin nel tuo bot)
+  data.limit = data.limit || 0;
+  data.pokemons = data.pokemons || [];
+
+  const name = args.join(' ');
+  if (!name) return m.reply(global.t('pokeEvolveNoName', userId, groupId));
+
+  const baseCard = data.pokemons.find(p => p.name.toLowerCase() === name.toLowerCase());
+  if (!baseCard) return m.reply(global.t('pokeEvolveNotOwned', userId, groupId, { name }));
+
+  const cost = rarityCosts[baseCard.rarity];
+  
+  // Controllo basato su data.limit
+  if (Number(data.limit) < cost) {
+    return m.reply(global.t('pokeEvolveNoCoins', userId, groupId, { balance: data.limit, cost }));
+  }
+
+  const nextForm = await getEvolution(baseCard.name);
+  if (!nextForm) return m.reply(global.t('pokeEvolveNoEvolution', userId, groupId, { name: baseCard.name }));
+
+  // Sottrazione del costo da data.limit
+  data.limit = Number(data.limit) - cost;
+
+  await conn.sendMessage(m.chat, { text: global.t('pokeEvolveEvolving', userId, groupId, { name: baseCard.name }), mentions: [user] }, { quoted: m });
+  await sleep(1000);
+  await conn.sendMessage(m.chat, { text: global.t('pokeEvolveProgress', userId, groupId), mentions: [user] }, { quoted: m });
+  await sleep(1000);
+  await conn.sendMessage(m.chat, { text: global.t('pokeEvolveSuccess', userId, groupId, { from: baseCard.name, to: nextForm }), mentions: [user] }, { quoted: m });
+
+  const index = data.pokemons.indexOf(baseCard);
+  if (index > -1) {
+    data.pokemons.splice(index, 1);
+  }
+
+  data.pokemons.push({
+    name: nextForm,
+    rarity: baseCard.rarity,
+    type: baseCard.type
+  });
+
+  return m.reply(global.t('pokeEvolveComplete', userId, groupId, { balance: data.limit }));
+};
+
+handler.help = ['evolvi <nome>'];
+handler.tags = ['pokemon'];
+handler.command = /^(evolvi|evolve)$/i;
+
+export default handler;
