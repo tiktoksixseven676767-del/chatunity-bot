@@ -1,4 +1,4 @@
- import fetch from 'node-fetch';
+import fetch from 'node-fetch';
 
 const rarityCosts = {
   'Comune': 100,
@@ -46,7 +46,7 @@ let handler = async (m, { conn, args }) => {
   const user = m.sender;
   const userId = m.sender;
   const groupId = m.chat;
-  
+
   global.db.data.users[user] = global.db.data.users[user] || {};
   const data = global.db.data.users[user];
 
@@ -60,14 +60,15 @@ let handler = async (m, { conn, args }) => {
   if (!baseCard) return m.reply(global.t('pokeEvolveNotOwned', userId, groupId, { name }));
 
   const cost = rarityCosts[baseCard.rarity];
-  if (data.mattecash < cost) {
+  // Correzione: Forzo il controllo numerico per evitare bug di confronto stringa/numero
+  if (Number(data.mattecash) < cost) {
     return m.reply(global.t('pokeEvolveNoCoins', userId, groupId, { balance: data.mattecash, cost }));
   }
 
   const nextForm = await getEvolution(baseCard.name);
   if (!nextForm) return m.reply(global.t('pokeEvolveNoEvolution', userId, groupId, { name: baseCard.name }));
 
-  data.mattecash -= cost;
+  data.mattecash = Number(data.mattecash) - cost;
 
   await conn.sendMessage(m.chat, { text: global.t('pokeEvolveEvolving', userId, groupId, { name: baseCard.name }), mentions: [user] }, { quoted: m });
   await sleep(1000);
