@@ -1,78 +1,104 @@
- 
-let tradeRequests = {};
+import fetch from 'node-fetch';
 
-let handler = async (m, { conn, args, command }) => {
-    const userId = m.sender;
-    const groupId = m.chat;
-    
-    global.db.data.users = global.db.data.users || {};
-    let sender = m.sender;
-    let users = global.db.data.users;
-    let username = sender.split('@')[0];
-
-    if (command === 'scambia' || command === 'trade') {
-        let target = m.mentionedJid?.[0];
-        if (!target) return m.reply(global.t('tradeUsage', userId, groupId));
-        
-        let myIndex = parseInt(args[1]) - 1;
-        let theirIndex = parseInt(args[2]) - 1;
-        let myPokemons = users[sender]?.pokemons || [];
-        let theirPokemons = users[target]?.pokemons || [];
-
-        if (!myPokemons[myIndex]) return m.reply(global.t('tradeYourNotExist', userId, groupId, { num: args[1] }));
-        if (!theirPokemons[theirIndex]) return m.reply(global.t('tradeTheirNotExist', userId, groupId, { num: args[2], user: target.split('@')[0] }), null, { mentions: [target] });
-
-        tradeRequests[target] = {
-            from: sender,
-            myIndex,
-            theirIndex
-        };
-
-        let myPoke = myPokemons[myIndex];
-        let theirPoke = theirPokemons[theirIndex];
-
-        let txt = global.t('tradeRequest', userId, groupId, {
-            from: username,
-            myPoke,
-            theirPoke,
-            target: target.split('@')[0]
-        });
-        
-        return conn.reply(m.chat, txt, m, { mentions: [target, sender] });
-    }
-
-    if (command === 'accetta' || command === 'accept') {
-        let trade = tradeRequests[sender];
-        if (!trade) return m.reply(global.t('tradeNoRequest', userId, groupId));
-
-        let { from, myIndex, theirIndex } = trade;
-        let myPokemons = users[sender]?.pokemons || [];
-        let theirPokemons = users[from]?.pokemons || [];
-
-        let myPoke = myPokemons[myIndex];
-        let theirPoke = theirPokemons[theirIndex];
-
-        if (!myPoke || !theirPoke) {
-            delete tradeRequests[sender];
-            return m.reply(global.t('tradeUnavailable', userId, groupId));
-        }
-
-        users[sender].pokemons[myIndex] = theirPoke;
-        users[from].pokemons[theirIndex] = myPoke;
-
-        delete tradeRequests[sender];
-
-        return m.reply(global.t('tradeSuccess', userId, groupId, {
-            from: from.split('@')[0],
-            to: sender.split('@')[0],
-            poke1: theirPoke,
-            poke2: myPoke
-        }), null, { mentions: [from, sender] });
-    }
+const rarityCosts = {
+  'Comune': 100,
+  'Non Comune': 1000,
+  'Raro': 10000,
+  'Leggendario': 100000
 };
 
-handler.help = ['scambia @user <your_num> <their_num>', 'trade @user <your_num> <their_num>', 'accetta', 'accept'];
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function getEvolution(name) {
+  try {
+    const speciesRes = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${name.toLowerCase()}`);
+    if (!speciesRes.ok) return null;
+    const speciesData = await speciesRes.json();
+    const evoChainUrl = speciesData.evolution_chain?.url;
+    if (!evoChainUrl) return null;
+
+    const evoRes = await fetch(evoChainUrl);
+    if (!evoRes.ok) return null;
+    const evoData = await evoRes.json();
+
+    function findNextEvolution(chain) {
+      if (chain.species.name.toLowerCase() === name.toLowerCase()) {
+        return chain.evolves_to?.[0]?.species?.name || null;
+      }
+      for (const evo of chain.evolves_to) {
+        const result = findNextEvolution(evo);
+        if (result) return result;
+      }
+      return null;
+    }
+
+    const nextEvo = findNextEvolution(evoData.chain);
+    return nextEvo;
+  } catch (err) {
+    console.error('Errore durante il recupero dell\'evoluzione:', err);
+    return null;
+  }
+}
+
+let handler = async (m, { conn, args }) => {
+  const user = m.sender; // Identico a Pokemon-buy.js
+  const userId = m.sender;
+  const groupId = m.chat;
+
+  // Accedo al database esattamente come in Pokemon-buy.js
+  global.db.data.users[user] = global.db.data.users[user] || {};
+  const data = global.db.data.users[user];
+
+  // Inizializzo le variabili usando 'limit' e 'pokemons'
+  data.limit = data.limit || 0;
+  data.pokemons = data.pokemons || [];
+
+  const name = args.join(' ');
+  if (!name) return m.reply(global.t('pokeEvolveNoName', userId, groupId));
+
+  // Cerco il pokemon nell'array pokemons (struttura confermata da Pokemon-inventario.js)
+  const baseCard = data.pokemons.find(p => p.name.toLowerCase() === name.toLowerCase());
+  if (!baseCard) return m.reply(global.t('pokeEvolveNotOwned', userId, groupId, { name }));
+
+  const cost = rarityCosts[baseCard.rarity] || 0;
+  
+  // Controllo del saldo 'limit'
+  if (data.limit < cost) {
+    return m.reply(global.t('pokeEvolveNoCoins', userId, groupId, { balance: data.limit, cost }));
+  }
+
+  const nextForm = await getEvolution(baseCard.name);
+  if (!nextForm) return m.reply(global.t('pokeEvolveNoEvolution', userId, groupId, { name: baseCard.name }));
+
+  // Sottrazione dei fondi
+  data.limit -= cost;
+
+  await conn.sendMessage(m.chat, { text: global.t('pokeEvolveEvolving', userId, groupId, { name: baseCard.name }), mentions: [user] }, { quoted: m });
+  await sleep(1000);
+  await conn.sendMessage(m.chat, { text: global.t('pokeEvolveProgress', userId, groupId), mentions: [user] }, { quoted: m });
+  await sleep(1000);
+  await conn.sendMessage(m.chat, { text: global.t('pokeEvolveSuccess', userId, groupId, { from: baseCard.name, to: nextForm }), mentions: [user] }, { quoted: m });
+
+  // Rimuovo la forma base e aggiungo l'evoluzione
+  const index = data.pokemons.indexOf(baseCard);
+  if (index > -1) {
+    data.pokemons.splice(index, 1);
+  }
+
+  data.pokemons.push({
+    name: nextForm,
+    rarity: baseCard.rarity,
+    type: baseCard.type,
+    level: (baseCard.level || 1) + 1 // Opzionale: aumenta il livello dopo l'evoluzione
+  });
+
+  return m.reply(global.t('pokeEvolveComplete', userId, groupId, { balance: data.limit }));
+};
+
+handler.help = ['evolvi <nome>'];
 handler.tags = ['pokemon'];
-handler.command = /^(scambia|trade|accetta|accept)$/i;
+handler.command = /^(evolvi|evolve)$/i;
 
 export default handler;
