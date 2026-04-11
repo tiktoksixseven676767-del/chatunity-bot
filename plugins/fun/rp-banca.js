@@ -1,8 +1,7 @@
- 
 let handler = async (m, { conn, usedPrefix }) => {
     const userId = m.sender;
     const groupId = m.chat;
-    
+
     let who = m.mentionedJid?.[0] || m.quoted?.sender || m.sender;
 
     if (!(who in global.db.data.users)) {
@@ -10,13 +9,13 @@ let handler = async (m, { conn, usedPrefix }) => {
     }
 
     let user = global.db.data.users[who];
-    
+
     // Inizializzazione sicura
     user.bank = Number(user.bank) || 0;
 
     const balance = formatNumber(user.bank);
     const isOwn = who === m.sender;
-    
+
     const message = isOwn 
         ? global.t('bankYourBalance', userId, groupId, { balance })
         : global.t('bankUserBalance', userId, groupId, { 
@@ -53,7 +52,7 @@ let handler = async (m, { conn, usedPrefix }) => {
             externalAdReply: {
                 title: '🏛️ ChatUnity Bank',
                 body: `Saldo: ${balance} UC`,
-                thumbnailUrl: 'https://i.ibb.co/bank-icon.png',
+                thumbnailUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRgM-x8cDsj5H87QT2KezC8_WyFhLcUZ28ESHYYpJam4zbgoX17LQao8uI&s',
                 mediaType: 1,
                 renderLargerThumbnail: true
             }
