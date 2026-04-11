@@ -52,7 +52,7 @@ let handler = async (m, { conn, usedPrefix }) => {
             externalAdReply: {
                 title: '🏛️ ChatUnity Bank',
                 body: `Saldo: ${balance} UC`,
-                thumbnailUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRgM-x8cDsj5H87QT2KezC8_WyFhLcUZ28ESHYYpJam4zbgoX17LQao8uI&s',
+                thumbnailUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ_ZIPkjgE3A59tzyfWvkwGf3pXAedcz0kJu-0MgKSoBQ&s=10',
                 mediaType: 1,
                 renderLargerThumbnail: true
             }
