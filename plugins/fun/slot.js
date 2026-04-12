@@ -43,7 +43,6 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
         user.limit = (user.limit || 0) - bet;
         user.exp = Math.max(0, (user.exp || 0) - xpLoss);
         resultMsg = global.t('slotLose', userId, groupId, { uc: bet, xp: xpLoss });
-        gifFile = '../../media/perdita.gif';
     }
 
     resultMsg += global.t('slotBalance', userId, groupId, {
