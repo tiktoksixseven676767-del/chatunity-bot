@@ -62,7 +62,7 @@ let handler = async (m, { conn, usedPrefix, command, text }) => {
 
 handler.help = ['tts <testo>'];
 handler.tags = ['ricerca'];
-handler.command = ['ttsearch', 'tiktoksearch', 'tts', 'tkshearch', 'play'];
+handler.command = ['ttsearch', 'tiktoksearch', 'tts', 'tkshearch'];
 handler.register = true;
 
 export default handler;
