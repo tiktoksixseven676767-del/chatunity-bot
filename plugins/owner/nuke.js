@@ -62,10 +62,12 @@ var handler = async (m, { conn, participants }) => {
     await delay(1000)
     await conn.groupUpdateDescription(m.chat, `『 🈵 』 Nessuno è mai rimasto in cima al mondo. Né tu, né io, e nemmeno gli dei. Ma quel vuoto insopportabile sul trono del cielo finisce oggi. D'ora in poi... io starò in cima.\nEntra nel canale:\n ${canale}`)
     await delay(1000)
-    const videoBuffer = await fs.readFile('./media/hado90.mp4')
-    await conn.sendMessage(m.chat, {
-        video: videoBuffer,
-        caption: `\`Non si schiaccia una formica con l'intento di non ucciderla. Semplicemente, sparisce. Proprio come questo gruppo.\`\nEntra nel canale:\n- ${canale}`,
+    const imageUrl = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRpnbN2TlEXKGJEke-QKag5QoV-0b0Xb6FgdpZ-7oDpfQ&s=10'
+await delay(1000)
+
+await conn.sendMessage(m.chat, {
+    image: { url: imageUrl },
+    caption: `\`Non si schiaccia una formica con l'intento di non ucciderla. Semplicemente, sparisce. Proprio come questo gruppo.\`\nEntra nel canale:\n- ${canale}`,
         gifPlayback: true,
         contextInfo: {
             ...global.fake.contextInfo
