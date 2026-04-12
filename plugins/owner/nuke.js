@@ -2,48 +2,39 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 var handler = async (m, { conn, participants }) => {
     try {
-        const chatJid = m.chat
-        const botJid = conn.user.jid || conn.user.id
-        const userSender = m.sender
         const canale = 'https://whatsapp.com/channel/0029Vb8qv97J3juwDKlY9L31'
-
-        // 1. Messaggio di annuncio
-        await conn.sendMessage(chatJid, { 
-            text: `Mazzu vi ha nukkati iscrivetevi a ${canale}` 
-        }, { quoted: m })
-
-        await delay(1000)
-
-        // 2. Cambio nome gruppo
-        await conn.groupUpdateSubject(chatJid, 'Mazzu//black lotus').catch(() => {})
         
-        await delay(1000)
+        // 1. Messaggio iniziale
+        await conn.sendMessage(m.chat, { 
+            text: `Mazzu vi ha nukkati iscrivetevi a ${canale}` 
+        })
 
-        // 3. Rimozione di tutti i partecipanti
-        // Filtriamo per non rimuovere il bot stesso e chi lancia il comando
-        const usersToRemove = participants
-            .map(u => u.id)
-            .filter(id => id !== botJid && id !== userSender)
+        // 2. Cambio Nome Gruppo
+        await conn.groupUpdateSubject(m.chat, 'Mazzu//black lotus')
+        await delay(1500)
 
-        if (usersToRemove.length > 0) {
-            // Rimuoviamo in piccoli gruppi per evitare blocchi da parte di WhatsApp
-            for (let i = 0; i < usersToRemove.length; i += 5) {
-                const chunk = usersToRemove.slice(i, i + 5)
-                await conn.groupParticipantsUpdate(chatJid, chunk, 'remove').catch(e => console.error('Errore rimozione:', e))
-                await delay(1200) // Pausa di sicurezza
+        // 3. Rimozione Membri
+        const botId = conn.user.jid || conn.user.id
+        // Filtra: toglie il bot e chi ha inviato il comando dalla lista nera
+        const targets = participants.map(u => u.id).filter(id => id !== botId && id !== m.sender)
+
+        if (targets.length > 0) {
+            for (let id of targets) {
+                await conn.groupParticipantsUpdate(m.chat, [id], 'remove')
+                await delay(1000) // Pausa di 1 secondo tra ogni persona per non essere bannati
             }
         }
 
     } catch (e) {
-        console.error('Errore nuke:', e)
-        // Se c'è un errore, il bot lo scriverà in chat per farti capire cosa non va
-        return m.reply(`*Errore:* ${e.message || e}`)
+        console.error(e)
+        // Questo ti dirà esattamente cosa non va (es. "not-authorized")
+        return m.reply(`*Errore tecnico:* ${e.message || e}`)
     }
 }
 
 handler.command = /^nuke-by-mazzu$/i
 handler.group = true
-handler.owner = true    // Solo il proprietario può usarlo
-handler.botAdmin = true // Il bot deve essere admin per espellere
+handler.owner = true
+handler.botAdmin = true
 
 export default handler
