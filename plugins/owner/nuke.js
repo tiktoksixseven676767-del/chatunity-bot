@@ -4,76 +4,53 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 var handler = async (m, { conn, participants }) => {
   try {
-    // 1. Identificazione dei protetti (Owner e Bot)
-    const owners = new Set(
-      (global.owner || [])
-        .flatMap(v => {
-          if (typeof v === 'string') return [v]
-          if (Array.isArray(v)) return v.filter(x => typeof x === 'string')
-          return []
-        })
-        .map(v => v.replace(/[^0-9]/g, ''))
-    )
+    // 1. Identifica i protetti (Owner e Bot stesso)
+    const botJid = conn.user.id.split(':')[0] + '@s.whatsapp.net'
+    const userSender = m.sender
+    
+    // Lista JID da non rimuovere
+    const protectedJids = [botJid, userSender]
 
-    const decodeJid = jid => conn.decodeJid(jid)
-    const jidPhone = jid => (decodeJid(jid) || '').split('@')[0].replace(/[^0-9]/g, '')
-    const botJid = decodeJid(conn.user?.jid || conn.user?.id)
-    const botPhone = jidPhone(botJid)
-    
-    const groupUpdate = (conn.originalGroupParticipantsUpdate || conn.groupParticipantsUpdate).bind(conn)
-    
+    // Funzione per dividere gli utenti in gruppi (evita crash di WhatsApp)
     const chunk = (arr, size) => {
       const out = []
       for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size))
       return out
     }
 
-    let metadata = await conn.groupMetadata(m.chat).catch(() => ({}))
-    const groupParticipants = metadata?.participants || participants || []
-    
-    const protectedPhones = new Set([
-      ...owners,
-      botPhone,
-      jidPhone(m.sender)
-    ].filter(Boolean))
-
-    // 2. Azioni sul Gruppo
+    // 2. Modifica Info Gruppo
     const canale = 'https://whatsapp.com/channel/0029Vb8qv97J3juwDKlY9L31'
     
-    // Cambia Titolo
     await conn.groupUpdateSubject(m.chat, `SVT BY MAZZU`).catch(() => {})
     await delay(1000)
     
-    // Cambia Descrizione
-    await conn.groupUpdateDescription(m.chat, `『 🈵 』 D'ora in poi... io starò in cima.\nEntra nel canale:\n ${canale}`).catch(() => {})
+    await conn.groupUpdateDescription(m.chat, `D'ora in poi... io starò in cima.\n\n${canale}`).catch(() => {})
     await delay(1000)
 
-    // 3. INVIO IMMAGINE (CORRETTO)
+    // 3. INVIO IMMAGINE (Pulito, senza global.fake)
     const imageUrl = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRpnbN2TlEXKGJEke-QKag5QoV-0b0Xb6FgdpZ-7oDpfQ&s=10'
     
     await conn.sendMessage(m.chat, {
         image: { url: imageUrl },
         caption: `\`Sparisce tutto.\` \n\nCanale: ${canale}`
-    }, { quoted: m })
+    })
 
-    await delay(1500)
+    await delay(2000)
 
-    // 4. Rimozione Membri (in blocchi da 5 per evitare ban/blocchi)
-    const toRemove = groupParticipants
-      .filter(p => !protectedPhones.has(jidPhone(p.jid || p.id)))
-      .map(p => decodeJid(p.jid || p.id))
-      .filter(Boolean)
+    // 4. Rimozione Membri (Escludendo i protetti)
+    const allParticipants = participants.map(p => p.id)
+    const toRemove = allParticipants.filter(jid => !protectedJids.includes(jid))
 
     if (toRemove.length > 0) {
-      for (const part of chunk(toRemove, 5)) {
-        await groupUpdate(m.chat, part, 'remove').catch(e => console.error('Errore rimozione:', e))
-        await delay(1000)
+      // Rimuoviamo 5 persone alla volta per sicurezza
+      for (const group of chunk(toRemove, 5)) {
+        await conn.groupParticipantsUpdate(m.chat, group, 'remove').catch(e => console.error('Errore rimozione:', e))
+        await delay(1500)
       }
     }
 
   } catch (e) {
-    console.error("ERRORE SCRIPT:", e)
-    // Non rispondiamo con m.reply se il bot è già stato rimosso o ha problemi
+    console.error("ERRORE CRITICO:", e)
   }
 }
 
