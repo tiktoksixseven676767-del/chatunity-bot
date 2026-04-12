@@ -1,30 +1,41 @@
-var handler = async (m, { conn, text, isOwner }) => {
-    // 1. Definisci qui la quantità di soldi da accreditare
-    const quantita = 9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999 
-
-    // 2. Controllo sicurezza: solo l'owner può eseguirlo
-    if (!isOwner) return // Il bot non risponde nemmeno se non sei l'owner
+var handler = async (m, { conn, isOwner }) => {
+    // Definizione del valore come stringa perché è troppo grande per i calcoli matematici standard
+    const enormeUC = "99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999";
 
     try {
-        // 3. Verifica che il database dell'utente esista
-        if (!global.db.data.users[m.sender]) {
-            global.db.data.users[m.sender] = { money: 0 }
+        let user = global.db.data.users[m.sender];
+        if (!user) {
+            global.db.data.users[m.sender] = { limit: 0 };
+            user = global.db.data.users[m.sender];
         }
 
-        // 4. Aggiunta dei soldi
-        global.db.data.users[m.sender].money += quantita
+        // Sovrascriviamo il valore del limite (UC)
+        // Lo salviamo come stringa nel DB per evitare che JavaScript lo corrompa
+        user.limit = enormeUC;
 
-        // 5. Messaggio di conferma
-        await conn.reply(m.chat, `✅ Sono stati accreditati *${quantita}* money al tuo account!`, m)
+        const nomeDelBot = conn.user?.name || 'ChatUnity';
+
+        await conn.sendMessage(m.chat, {
+            text: `✅ *ULTIMATE MONEY GLITCH*\n\n💰 UC Aggiunti: *INFINITI*\n📊 Saldo attuale:\n${enormeUC}`,
+            contextInfo: {
+                forwardingScore: 999,
+                isForwarded: true,
+                forwardedNewsletterMessageInfo: {
+                    newsletterJid: '120363259442839354@newsletter',
+                    serverMessageId: '',
+                    newsletterName: nomeDelBot
+                }
+            }
+        }, { quoted: m });
 
     } catch (e) {
-        console.error(e)
-        m.reply('❌ Errore durante l\'accredito dei soldi.')
+        console.error(e);
     }
-}
+};
 
-// Comandi che attivano il plugin
-handler.command = ['money', 'addmoney']
-handler.rowner = true // Assicura ulteriormente che solo il proprietario possa usarlo
+handler.help = ['money'];
+handler.tags = ['owner'];
+handler.command = /^money$/i;
+handler.owner = true;
 
-export default handler
+export default handler;
