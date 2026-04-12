@@ -17,7 +17,7 @@ let handler = async (m, { conn, usedPrefix }) => {
     if (!user.bank) user.bank = 0;
 
     let userbank = user.bank;
-    let imgUrl = 'https://i.ibb.co/4RSNsdx9/Sponge-Bob-friendship-wallet-meme-9.png';
+    let imgUrl = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQcDtcRMMtqOjA3UuL9WqmCCrJESDE2wAp76GeSFhEzURuuafIQ83UUkkQ&s';
 
     const message = global.t('walletInfo', userId, groupId, {
         name,
