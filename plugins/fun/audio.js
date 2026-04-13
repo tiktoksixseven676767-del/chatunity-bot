@@ -1,42 +1,40 @@
-import { exec } from 'child_process'
-import fs from 'fs'
-import path from 'path'
+import fetch from 'node-fetch'
 
 let handler = async (m, { conn, args, usedPrefix, command }) => {
     if (!args[0]) return m.reply(`✨ Inserisci un link!\nEsempio: ${usedPrefix + command} https://www.youtube.com/watch?v=dQw4w9WgXcQ`)
 
-    await m.reply('⏳ *Termux sta elaborando...*')
+    await m.reply('🎵 *Recupero audio in corso...*')
 
-    const url = args[0]
-    const tmpDir = path.join(process.cwd(), 'tmp')
-    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir) // Crea cartella tmp se manca
-    
-    const fileName = `audio_${Date.now()}.mp3`
-    const tmpFile = path.join(tmpDir, fileName)
+    try {
+        // Questa API è un "ponte" molto stabile
+        const api = await fetch(`https://api.boxi.bot/api/ytmp3?url=${encodeURIComponent(args[0])}`)
+        const res = await api.json()
 
-    // Comando ottimizzato per Termux
-    // --no-playlist evita di scaricare intere liste
-    // --audio-quality 5 (un po' più basso per velocizzare su mobile)
-    const cmd = `yt-dlp -f "ba" -x --audio-format mp3 --audio-quality 5 --no-playlist -o "${tmpFile}" "${url}"`
-
-    exec(cmd, async (error, stdout, stderr) => {
-        if (error) {
-            console.error(`--- ERRORE TERMUX ---\n${stderr}`)
-            return m.reply(`❌ *Errore critico!*\n\n*Dettaglio:* ${stderr.split('\n')[0]}\n\n*Cosa fare?* Prova a cambiare connessione (da Wi-Fi a Dati Mobili) o scrivi \`pip install -U yt-dlp\` su Termux.`)
-        }
-
-        if (fs.existsSync(tmpFile)) {
-            await conn.sendMessage(m.chat, { 
-                audio: fs.readFileSync(tmpFile), 
-                mimetype: 'audio/mpeg', 
-                fileName: `music.mp3` 
-            }, { quoted: m })
+        if (res.status !== true) {
+            // Se la prima fallisce, proviamo la seconda (Emergency Link)
+            const backup = await fetch(`https://api.siputzx.my.id/api/d/ytmp3?url=${args[0]}`)
+            const res2 = await backup.json()
             
-            fs.unlinkSync(tmpFile) // Elimina dopo l'invio
-        } else {
-            m.reply("❌ Errore: Il file non è stato generato.")
+            if (!res2.status) throw 'Tutte le API sono bloccate'
+
+            await conn.sendMessage(m.chat, { 
+                audio: { url: res2.data.dl }, 
+                mimetype: 'audio/mpeg', 
+                fileName: `audio.mp3` 
+            }, { quoted: m })
+            return
         }
-    })
+
+        await conn.sendMessage(m.chat, { 
+            audio: { url: res.data.url }, 
+            mimetype: 'audio/mpeg', 
+            fileName: `${res.data.title}.mp3` 
+            }, { quoted: m })
+
+    } catch (e) {
+        console.error(e)
+        m.reply("❌ *Errore Finale:* YouTube è troppo protetto al momento.\n\n*Cosa puoi fare?*\n1. Cambia connessione (passa da Wi-Fi a Dati Mobili).\n2. Aspetta 15 minuti che il blocco IP scada.")
+    }
 }
 
 handler.help = ['audio <url>']
