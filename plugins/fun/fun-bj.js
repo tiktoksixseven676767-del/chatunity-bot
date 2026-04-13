@@ -1,32 +1,33 @@
 let handler = async (m, { conn, usedPrefix, command }) => {
     // Inizializza il database per l'utente se non esiste
+    global.db.data.users[m.sender] = global.db.data.users[m.sender] || {}
     global.db.data.users[m.sender].blackjack = global.db.data.users[m.sender].blackjack || { status: false }
     let bj = global.db.data.users[m.sender].blackjack
 
-    // Comando Inizio Partita
+    // Inizio Partita
     if (command === 'blackjack' || command === 'bj') {
-        if (bj.status) return m.reply('Hai già una partita in corso! Usa i bottoni del messaggio precedente.')
+        if (bj.status) return m.reply('⚠ Hai già una partita in corso! Usa i bottoni sopra.')
         
         bj.status = true
         bj.userCards = [getRandomCard(), getRandomCard()]
         bj.dealerCards = [getRandomCard()]
         
-        return sendBjMessage(m, conn, bj, "Scegli la tua mossa:")
+        return sendBjButtons(m, conn, bj, "Scegli la tua mossa")
     }
 
-    // Comando Colpisci (Carta)
+    // Azione: Colpisci
     if (command === 'colpisci') {
-        if (!bj.status) return
+        if (!bj.status) return 
         bj.userCards.push(getRandomCard())
         
         if (calculateScore(bj.userCards) > 21) {
             bj.status = false
-            return m.reply(`${displayStatus(bj)}\n\n💥 *SBALLATO!* Hai superato 21. Come vedi, rischiare troppo porta sempre alla sconfitta.`)
+            return m.reply(`${displayStatus(bj)}\n\n💥 *SBALLATO!* Hai superato 21. Come vedi, basta un attimo per perdere tutto.`)
         }
-        return sendBjMessage(m, conn, bj, "Vuoi rischiare ancora?")
+        return sendBjButtons(m, conn, bj, "Vuoi rischiare ancora?")
     }
 
-    // Comando Stai (Passa al banco)
+    // Azione: Stai
     if (command === 'stai') {
         if (!bj.status) return
         
@@ -39,11 +40,11 @@ let handler = async (m, { conn, usedPrefix, command }) => {
         let result = ""
 
         if (dScore > 21 || uScore > dScore) {
-            result = "🎉 *HAI VINTO!* (Questa volta... ma il banco non perde mai due volte di fila)."
+            result = "🎉 *HAI VINTO!* (Stavolta ti è andata bene, ma la fortuna è un'illusione)."
         } else if (uScore === dScore) {
-            result = "🤝 *PAREGGIO!* Il banco trattiene le fiches."
+            result = "🤝 *PAREGGIO!* Il banco non perde mai le sue fiches."
         } else {
-            result = "📉 *IL BANCO VINCE!* Ecco la prova: alla lunga, la casa vince sempre."
+            result = "📉 *IL BANCO VINCE!* Matematica pura: alla lunga vince sempre la casa."
         }
         
         bj.status = false
@@ -52,32 +53,24 @@ let handler = async (m, { conn, usedPrefix, command }) => {
 }
 
 // --- Funzioni Helper ---
-
 function getRandomCard() { return Math.floor(Math.random() * 10) + 1 }
 function calculateScore(cards) { return cards.reduce((a, b) => a + b, 0) }
 
 function displayStatus(bj) {
-    return `🃏 *BLACKJACK SIMULATOR*\n\n👤 Tu: ${bj.userCards.join(' + ')} = *${calculateScore(bj.userCards)}*\n🏛️ Banco: ${bj.dealerCards.join(' + ')} = *${calculateScore(bj.dealerCards)}*`
+    return `🃏 *BLACKJACK EDUCATIVO*\n\n👤 Tu: ${bj.userCards.join(' + ')} = *${calculateScore(bj.userCards)}*\n🏛️ Banco: ${bj.dealerCards.join(' + ')} = *${calculateScore(bj.dealerCards)}*`
 }
 
-async function sendBjMessage(m, conn, bj, footer) {
-    const sections = [
-        {
-            title: "Azioni di Gioco",
-            rows: [
-                { title: "🃏 Colpisci", rowId: `.colpisci`, description: "Chiedi un'altra carta" },
-                { title: "🛑 Stai", rowId: `.stai`, description: "Fermati e guarda il banco" }
-            ]
-        }
+// Funzione per inviare i bottoni (Stesso stile del .play)
+async function sendBjButtons(m, conn, bj, footer) {
+    const buttons = [
+        { buttonId: `.colpisci`, buttonText: { displayText: '🃏 CARTA' }, type: 1 },
+        { buttonId: `.stai`, buttonText: { displayText: '🛑 STAI' }, type: 1 }
     ]
 
     await conn.sendMessage(m.chat, {
         text: displayStatus(bj),
         footer: footer,
-        buttons: [
-            { buttonId: '.colpisci', buttonText: { displayText: '🃏 Colpisci' }, type: 1 },
-            { buttonId: '.stai', buttonText: { displayText: '🛑 Stai' }, type: 1 }
-        ],
+        buttons: buttons,
         headerType: 1
     }, { quoted: m })
 }
