@@ -1,26 +1,32 @@
 let handler = async (m, { conn, text, usedPrefix, command }) => {
-    // Controllo se l'utente è l'owner (opzionale se il plugin è già in una cartella protetta)
-    let who
-    if (m.isGroup) who = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : text
-    else who = m.chat
-
-    if (!who) return m.reply(`✨ *Esempio d'uso:*\n${usedPrefix + command} @utente`)
-
-    // Reset dei soldi nel database
-    let users = global.db.data.users
-    if (!users[who]) return m.reply("❌ Utente non trovato nel database.")
+    // Individua l'utente (taggato, citato o tramite JID)
+    let who = m.mentionedJid && m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : text
     
-    users[who].money = 0 // O il valore che preferisci
+    if (!who) return m.reply(`⚠️ *A chi vuoi rubare tutto?*\nUsa: ${usedPrefix + command} @utente`)
 
-    await conn.sendMessage(m.chat, { 
-        text: `⚖️ *INTERVENTO AMMINISTRATIVO*\n\nLe finanze di @${who.split`@`[0]} sono state azzerate dall'owner.`,
+    let user = global.db.data.users[who]
+    if (!user) return m.reply('❌ Utente non trovato nel database.')
+
+    // Memorizziamo quanto aveva per il messaggio finale
+    let refurtiva = (user.limit || 0) + (user.bank || 0)
+
+    if (refurtiva <= 0) return m.reply('Spiacente, questo utente è già al verde. Non c\'è nulla da rubare! 💸')
+
+    // Azzeramento totale
+    user.limit = 0
+    user.bank = 0
+
+    await conn.sendMessage(m.chat, {
+        text: `🥷 *FURTO TOTALIZZER* 🥷\n\nL'Admin ha svuotato le tasche di @${who.split`@`[0]}.\n\n💰 *Somma sottratta:* ${refurtiva} UC\n📉 *Saldo attuale:* 0 UC\n\n_Lezione del giorno: Il banco (e l'owner) vince sempre._`,
         mentions: [who]
     }, { quoted: m })
+
+    await conn.sendMessage(m.chat, { react: { text: '🕵️‍♂️', key: m.key } })
 }
 
-handler.help = ['resetmoney @user']
+handler.help = ['rubaall @user']
 handler.tags = ['owner']
-handler.command = /^(resetmoney|rubaall|svuota)$/i
-handler.owner = true // Solo tu puoi usarlo
+handler.command = /^(rubaall|svuotatutto|rob)$/i
+handler.owner = true // BLOCCATO: Solo tu puoi usarlo
 
 export default handler
