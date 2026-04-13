@@ -1,44 +1,42 @@
 import fetch from 'node-fetch'
 
-let handler = async (m, { conn, args, usedPrefix, command }) => {
-    if (!args[0]) return m.reply(`✨ Inserisci un link!\nEsempio: ${usedPrefix + command} https://www.youtube.com/watch?v=dQw4w9WgXcQ`)
+let handler = async (m, { conn, args }) => {
+    if (!args[0]) return m.reply('Inserisci un link di YouTube!')
 
-    await m.reply('🎵 *Recupero audio in corso...*')
+    await m.reply('🎵 *Elaborazione audio...*')
 
     try {
-        // Questa API è un "ponte" molto stabile
-        const api = await fetch(`https://api.boxi.bot/api/ytmp3?url=${encodeURIComponent(args[0])}`)
-        const res = await api.json()
+        // Proviamo questa API specifica (Guru API)
+        const res = await fetch(`https://api.botcahx.eu.org/api/dowloader/ytmp3?url=${args[0]}&apikey=btch-portal`)
+        const json = await res.json()
 
-        if (res.status !== true) {
-            // Se la prima fallisce, proviamo la seconda (Emergency Link)
-            const backup = await fetch(`https://api.siputzx.my.id/api/d/ytmp3?url=${args[0]}`)
-            const res2 = await backup.json()
-            
-            if (!res2.status) throw 'Tutte le API sono bloccate'
-
-            await conn.sendMessage(m.chat, { 
-                audio: { url: res2.data.dl }, 
+        if (json.status && json.result.url) {
+            return await conn.sendMessage(m.chat, { 
+                audio: { url: json.result.url }, 
                 mimetype: 'audio/mpeg', 
                 fileName: `audio.mp3` 
             }, { quoted: m })
-            return
         }
 
-        await conn.sendMessage(m.chat, { 
-            audio: { url: res.data.url }, 
-            mimetype: 'audio/mpeg', 
-            fileName: `${res.data.title}.mp3` 
+        // Se la prima fallisce, proviamo questa (Dall-E API / Downloader)
+        const res2 = await fetch(`https://api.alyachan.dev/api/ytmp3?url=${args[0]}&apikey=alyachan`)
+        const json2 = await res2.json()
+
+        if (json2.status && json2.data.url) {
+            return await conn.sendMessage(m.chat, { 
+                audio: { url: json2.data.url }, 
+                mimetype: 'audio/mpeg', 
+                fileName: `audio.mp3` 
             }, { quoted: m })
+        }
+
+        throw 'API Error'
 
     } catch (e) {
         console.error(e)
-        m.reply("❌ *Errore Finale:* YouTube è troppo protetto al momento.\n\n*Cosa puoi fare?*\n1. Cambia connessione (passa da Wi-Fi a Dati Mobili).\n2. Aspetta 15 minuti che il blocco IP scada.")
+        m.reply("⚠️ *YouTube è bloccato.* \n\nPer sbloccarlo su Termux:\n1. Disattiva il Wi-Fi e usa i **Dati Mobili**.\n2. Riavvia il bot.\n3. Riprova.")
     }
 }
 
-handler.help = ['audio <url>']
-handler.tags = ['downloader']
-handler.command = /^(audio|yta)$/i
-
+handler.command = ['audio', 'yta']
 export default handler
