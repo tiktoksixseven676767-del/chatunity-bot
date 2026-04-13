@@ -1,44 +1,44 @@
-import fetch from 'node-fetch';
+import fetch from 'node-fetch'
 
 let handler = async (m, { conn, args, usedPrefix, command }) => {
-    if (!args[0]) return m.reply(`✨ *Esempio d'uso:*\n${usedPrefix + command} https://www.youtube.com/watch?v=dQw4w9WgXcQ`);
+    if (!args[0]) return m.reply(`✨ *Esempio d'uso:*\n${usedPrefix + command} https://www.youtube.com/watch?v=dQw4w9WgXcQ`)
 
-    await m.reply(global.wait);
+    await m.reply(global.wait)
 
     try {
-        // Questa API è attualmente una delle più stabili per i bot WhatsApp
-        const res = await fetch(`https://api.zenkey.my.id/api/download/ytmp3?url=${encodeURIComponent(args[0])}&apikey=zenkey`);
-        const json = await res.json();
+        // Proviamo questa API che è attualmente molto stabile
+        const res = await fetch(`https://api.shizoke.site/api/download/ytmp3?url=${encodeURIComponent(args[0])}`)
+        const json = await res.json()
 
-        if (!json.status) {
-            // Se la prima fallisce, proviamo un'alternativa di emergenza
-            const fallback = await fetch(`https://api.vreden.my.id/api/ytmp3?url=${encodeURIComponent(args[0])}`);
-            const resFb = await fallback.json();
+        if (json.status !== true || !json.result.downloadUrl) {
+            // Backup: se la prima fallisce, proviamo la seconda subito
+            const res2 = await fetch(`https://api.agungnyx.my.id/api/youtube-audio?url=${encodeURIComponent(args[0])}`)
+            const json2 = await res2.json()
             
-            if (!resFb.status) throw 'Tutte le API sono offline';
-
+            if (!json2.status) throw 'API Offline'
+            
             await conn.sendMessage(m.chat, { 
-                audio: { url: resFb.result.download }, 
+                audio: { url: json2.result.downloadUrl }, 
                 mimetype: 'audio/mpeg', 
                 fileName: `audio.mp3` 
-            }, { quoted: m });
-            return;
+            }, { quoted: m })
+            return
         }
 
         await conn.sendMessage(m.chat, { 
-            audio: { url: json.result.download_url }, 
+            audio: { url: json.result.downloadUrl }, 
             mimetype: 'audio/mpeg', 
             fileName: `${json.result.title}.mp3` 
-        }, { quoted: m });
+        }, { quoted: m })
 
     } catch (e) {
-        console.error(e);
-        m.reply("❌ Al momento i server di YouTube bloccano il download. Riprova con un altro link o riprova più tardi.");
+        console.error(e)
+        m.reply("❌ Tutte le API sono bloccate da YouTube. Riprova tra 10 minuti o usa un altro link.")
     }
-};
+}
 
-handler.help = ['audio <url>'];
-handler.tags = ['downloader'];
-handler.command = /^(audio|yta)$/i;
+handler.help = ['audio <url>']
+handler.tags = ['downloader']
+handler.command = /^(audio|yta)$/i
 
-export default handler;
+export default handler
