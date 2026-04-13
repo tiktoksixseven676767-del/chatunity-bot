@@ -22,7 +22,7 @@ let handler = async (m, { conn, usedPrefix, command }) => {
         
         if (calculateScore(bj.userCards) > 21) {
             bj.status = false
-            return m.reply(`${displayStatus(bj)}\n\n💥 *SBALLATO!* Hai superato 21. Come vedi, basta un attimo per perdere tutto.`)
+            return m.reply(`${displayStatus(bj)}\n\n💥 *SBALLATO!* Hai superato 21. hai perso!.`)
         }
         return sendBjButtons(m, conn, bj, "Vuoi rischiare ancora?")
     }
@@ -42,9 +42,9 @@ let handler = async (m, { conn, usedPrefix, command }) => {
         if (dScore > 21 || uScore > dScore) {
             result = "🎉 *HAI VINTO!* (Stavolta ti è andata bene, ma la fortuna è un'illusione)."
         } else if (uScore === dScore) {
-            result = "🤝 *PAREGGIO!* Il banco non perde mai le sue fiches."
+            result = "🤝 *PAREGGIO!* ritenta."
         } else {
-            result = "📉 *IL BANCO VINCE!* Matematica pura: alla lunga vince sempre la casa."
+            result = "📉 *IL BANCO VINCE!*"
         }
         
         bj.status = false
@@ -57,7 +57,7 @@ function getRandomCard() { return Math.floor(Math.random() * 10) + 1 }
 function calculateScore(cards) { return cards.reduce((a, b) => a + b, 0) }
 
 function displayStatus(bj) {
-    return `🃏 *BLACKJACK EDUCATIVO*\n\n👤 Tu: ${bj.userCards.join(' + ')} = *${calculateScore(bj.userCards)}*\n🏛️ Banco: ${bj.dealerCards.join(' + ')} = *${calculateScore(bj.dealerCards)}*`
+    return `🃏 *BLACKJACK*\n\n👤 Tu: ${bj.userCards.join(' + ')} = *${calculateScore(bj.userCards)}*\n🏛️ Banco: ${bj.dealerCards.join(' + ')} = *${calculateScore(bj.dealerCards)}*`
 }
 
 // Funzione per inviare i bottoni (Stesso stile del .play)
