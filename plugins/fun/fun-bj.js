@@ -1,36 +1,51 @@
-let handler = async (m, { conn, usedPrefix, command }) => {
-    // Inizializza il database per l'utente se non esiste
+let handler = async (m, { conn, usedPrefix, command, text }) => {
     global.db.data.users[m.sender] = global.db.data.users[m.sender] || {}
-    global.db.data.users[m.sender].blackjack = global.db.data.users[m.sender].blackjack || { status: false }
-    let bj = global.db.data.users[m.sender].blackjack
+    
+    // Comando per resettare manualmente la sessione
+    if (command === 'sessionibj') {
+        global.db.data.users[m.sender].blackjack = { status: false }
+        return m.reply('✅ Sessione Blackjack resettata con successo.')
+    }
+
+    let bj = global.db.data.users[m.sender].blackjack || { status: false }
+
+    // Controllo Timeout (3 minuti = 180000 ms)
+    if (bj.status && bj.lastAction && (new Date() - bj.lastAction > 180000)) {
+        bj.status = false
+        m.reply('⏱️ *Sessione Scaduta:* La partita è stata annullata perché sono passati più di 3 minuti.')
+    }
 
     // Inizio Partita
     if (command === 'blackjack' || command === 'bj') {
-        if (bj.status) return m.reply('⚠ Hai già una partita in corso! Usa i bottoni sopra.')
-        
+        if (bj.status) return m.reply('⚠ Hai già una partita in corso! Usa i bottoni o scrivi `.stai`.')
+
         bj.status = true
         bj.userCards = [getRandomCard(), getRandomCard()]
         bj.dealerCards = [getRandomCard()]
-        
-        return sendBjButtons(m, conn, bj, "Scegli la tua mossa")
+        bj.lastAction = new Date() * 1 // Salva il tempo attuale
+
+        global.db.data.users[m.sender].blackjack = bj
+        return sendBjButtons(m, conn, bj, "Hai 3 minuti per rispondere")
     }
 
     // Azione: Colpisci
     if (command === 'colpisci') {
-        if (!bj.status) return 
-        bj.userCards.push(getRandomCard())
+        if (!bj.status) return m.reply('❌ Non hai partite attive. Scrivi .bj')
         
+        bj.lastAction = new Date() * 1 // Aggiorna il tempo a ogni mossa
+        bj.userCards.push(getRandomCard())
+
         if (calculateScore(bj.userCards) > 21) {
             bj.status = false
-            return m.reply(`${displayStatus(bj)}\n\n💥 *SBALLATO!* Hai superato 21. hai perso!.`)
+            return m.reply(`${displayStatus(bj)}\n\n💥 *SBALLATO!* Hai superato 21. Hai perso!`)
         }
-        return sendBjButtons(m, conn, bj, "Vuoi rischiare ancora?")
+        return sendBjButtons(m, conn, bj, "Vuoi un'altra carta?")
     }
 
     // Azione: Stai
     if (command === 'stai') {
-        if (!bj.status) return
-        
+        if (!bj.status) return 
+
         while (calculateScore(bj.dealerCards) < 17) {
             bj.dealerCards.push(getRandomCard())
         }
@@ -40,19 +55,19 @@ let handler = async (m, { conn, usedPrefix, command }) => {
         let result = ""
 
         if (dScore > 21 || uScore > dScore) {
-            result = "🎉 *HAI VINTO!* (Stavolta ti è andata bene, ma la fortuna è un'illusione)."
+            result = "🎉 *HAI VINTO!* (Stavolta ti è andata bene, ma il banco non dorme mai)."
         } else if (uScore === dScore) {
-            result = "🤝 *PAREGGIO!* ritenta."
+            result = "🤝 *PAREGGIO!* Ritenta."
         } else {
-            result = "📉 *IL BANCO VINCE!*"
+            result = "📉 *IL BANCO VINCE!* La lezione continua."
         }
-        
+
         bj.status = false
         return m.reply(`${displayStatus(bj)}\n\n${result}`)
     }
 }
 
-// --- Funzioni Helper ---
+// --- Helper Functions ---
 function getRandomCard() { return Math.floor(Math.random() * 10) + 1 }
 function calculateScore(cards) { return cards.reduce((a, b) => a + b, 0) }
 
@@ -60,7 +75,6 @@ function displayStatus(bj) {
     return `🃏 *BLACKJACK*\n\n👤 Tu: ${bj.userCards.join(' + ')} = *${calculateScore(bj.userCards)}*\n🏛️ Banco: ${bj.dealerCards.join(' + ')} = *${calculateScore(bj.dealerCards)}*`
 }
 
-// Funzione per inviare i bottoni (Stesso stile del .play)
 async function sendBjButtons(m, conn, bj, footer) {
     const buttons = [
         { buttonId: `.colpisci`, buttonText: { displayText: '🃏 CARTA' }, type: 1 },
@@ -75,5 +89,5 @@ async function sendBjButtons(m, conn, bj, footer) {
     }, { quoted: m })
 }
 
-handler.command = /^(blackjack|bj|colpisci|stai)$/i
+handler.command = /^(blackjack|bj|colpisci|stai|sessionibj)$/i
 export default handler
