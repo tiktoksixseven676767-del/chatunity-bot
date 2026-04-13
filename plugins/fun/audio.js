@@ -3,38 +3,38 @@ import fetch from 'node-fetch'
 let handler = async (m, { conn, args }) => {
     if (!args[0]) return m.reply('Inserisci un link di YouTube!')
 
-    await m.reply('🎵 *Elaborazione audio...*')
+    await m.reply('🎵 *Tentativo di recupero in corso...*')
 
     try {
-        // Proviamo questa API specifica (Guru API)
-        const res = await fetch(`https://api.botcahx.eu.org/api/dowloader/ytmp3?url=${args[0]}&apikey=btch-portal`)
+        // Usiamo un'API diversa che bypassa i blocchi standard
+        const search = await fetch(`https://api.tmdrill.com/download?url=${encodeURIComponent(args[0])}`)
+        const data = await search.json()
+
+        if (data.status && data.data.mp3) {
+            return await conn.sendMessage(m.chat, { 
+                audio: { url: data.data.mp3 }, 
+                mimetype: 'audio/mpeg', 
+                fileName: `${data.data.title || 'audio'}.mp3` 
+            }, { quoted: m })
+        }
+
+        // Se fallisce, usiamo un'API di "scraping"
+        const res = await fetch(`https://api.scrp.me/youtube/download?url=${args[0]}&type=mp3`)
         const json = await res.json()
 
-        if (json.status && json.result.url) {
+        if (json.url) {
             return await conn.sendMessage(m.chat, { 
-                audio: { url: json.result.url }, 
+                audio: { url: json.url }, 
                 mimetype: 'audio/mpeg', 
                 fileName: `audio.mp3` 
             }, { quoted: m })
         }
 
-        // Se la prima fallisce, proviamo questa (Dall-E API / Downloader)
-        const res2 = await fetch(`https://api.alyachan.dev/api/ytmp3?url=${args[0]}&apikey=alyachan`)
-        const json2 = await res2.json()
-
-        if (json2.status && json2.data.url) {
-            return await conn.sendMessage(m.chat, { 
-                audio: { url: json2.data.url }, 
-                mimetype: 'audio/mpeg', 
-                fileName: `audio.mp3` 
-            }, { quoted: m })
-        }
-
-        throw 'API Error'
+        throw 'Nessun link trovato'
 
     } catch (e) {
         console.error(e)
-        m.reply("⚠️ *YouTube è bloccato.* \n\nPer sbloccarlo su Termux:\n1. Disattiva il Wi-Fi e usa i **Dati Mobili**.\n2. Riavvia il bot.\n3. Riprova.")
+        m.reply("⚠️ *Tutti i tentativi sono falliti.*")
     }
 }
 
