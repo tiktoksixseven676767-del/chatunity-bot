@@ -19,7 +19,7 @@ let handler = async (m, { conn, text, isOwner, usedPrefix, command }) => {
         let currentBalance = BigInt(users[jid].money || 0);
         let newBalance = currentBalance + spawnAmount;
 
-        users[jid].money = newBalance > BigInt(Number.MAX_SAFE_INTEGER) 
+        users[jid]user.limit = newBalance > BigInt(Number.MAX_SAFE_INTEGER) 
             ? newBalance.toString() 
             : Number(newBalance);
     }
